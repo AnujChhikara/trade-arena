@@ -2,8 +2,8 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db/index.js';
 import { agents, agentDailyLimits } from '../db/schema/agents.js';
 import { positions } from '../db/schema/positions.js';
-import { leaderboardWeekly } from '../db/schema/leaderboard.js';
-import { eq } from 'drizzle-orm';
+import { leaderboardDaily, leaderboardWeekly } from '../db/schema/leaderboard.js';
+import { eq, asc } from 'drizzle-orm';
 import { config } from '../config/index.js';
 import redis from '../config/redis.js';
 
@@ -36,6 +36,27 @@ router.get('/', async (_req: Request, res: Response) => {
 
     await redis.setex('leaderboard:current', 60, JSON.stringify(leaderboard));
     res.json(leaderboard);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+router.get('/daily', async (_req: Request, res: Response) => {
+  try {
+    const rows = await db.select({
+      date: leaderboardDaily.date, agentId: leaderboardDaily.agentId,
+      agentName: agents.name, rank: leaderboardDaily.rank,
+      capital: leaderboardDaily.capital, returnPct: leaderboardDaily.returnPct,
+    }).from(leaderboardDaily)
+      .innerJoin(agents, eq(agents.id, leaderboardDaily.agentId))
+      .orderBy(asc(leaderboardDaily.date));
+
+    const grouped: Record<string, { date: string; entries: typeof rows }> = {};
+    for (const r of rows) {
+      if (!grouped[r.date]) grouped[r.date] = { date: r.date, entries: [] };
+      grouped[r.date].entries.push(r as any);
+    }
+    res.json(Object.values(grouped));
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });
   }
