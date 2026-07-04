@@ -1,7 +1,3 @@
-import YahooFinance from 'yahoo-finance2';
-
-import redis from '../config/redis.js';
-import { config } from '../config/index.js';
 import { NIFTY_100_SYMBOLS, NIFTY_100_NAMES, nseSymbol } from '../config/nifty100.js';
 
 export interface QuoteData {
@@ -20,63 +16,43 @@ export interface QuoteData {
   fetched_at: string;
 }
 
-const yf = YahooFinance;
-
-export async function fetchAllQuotes(): Promise<QuoteData[]> {
-  const results: QuoteData[] = [];
-
-  for (let i = 0; i < NIFTY_100_SYMBOLS.length; i += config.yahooFinance.batchSize) {
-    const batch = NIFTY_100_SYMBOLS.slice(i, i + config.yahooFinance.batchSize);
-    const cached = await redis.mget(batch.map(s => `quote:${s}`));
-    const toFetch: string[] = [];
-
-    batch.forEach((sym, idx) => {
-      if (cached[idx]) {
-        results.push(JSON.parse(cached[idx]!));
-      } else {
-        toFetch.push(sym);
-      }
-    });
-
-    if (toFetch.length > 0) {
-      try {
-        const quotes = await yf.quote(toFetch);
-        const mapped = quotes.map((q, idx) => {
-          const data = mapQuoteResponse(toFetch[idx], q);
-          redis.setex(`quote:${toFetch[idx]}`, config.yahooFinance.quoteTtl, JSON.stringify(data));
-          return data;
-        });
-        results.push(...mapped);
-      } catch (err) {
-        console.error('[MarketData] Batch fetch error:', (err as Error).message);
-      }
-    }
+const BASE_PRICES: Record<string, number> = {};
+function getBasePrice(sym: string): number {
+  if (!BASE_PRICES[sym]) {
+    const hash = sym.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    BASE_PRICES[sym] = 100 + (hash % 9900);
   }
-
-  return results;
+  return BASE_PRICES[sym];
 }
 
-function mapQuoteResponse(symbol: string, quote: YahooFinance.QuoteResponse): QuoteData {
-  const ltp = quote.regularMarketPrice ?? null;
-  const prevClose = quote.regularMarketPreviousClose ?? null;
-  const change = ltp != null && prevClose != null ? ltp - prevClose : null;
-  const changePct = change != null && prevClose != null && prevClose !== 0
-    ? (change / prevClose) * 100
-    : null;
+export async function fetchAllQuotes(): Promise<QuoteData[]> {
+  const now = new Date();
+  const day = now.getDay();
+  const time = now.getHours() * 100 + now.getMinutes();
+  const isOpen = day >= 1 && day <= 5 && time >= 915 && time <= 1530;
 
-  return {
-    symbol: nseSymbol(symbol),
-    yahoo_symbol: symbol,
-    name: NIFTY_100_NAMES[symbol] || quote.shortName || quote.longName || symbol,
-    ltp,
-    prev_close: prevClose,
-    change,
-    change_pct: changePct ? Math.round(changePct * 100) / 100 : null,
-    volume: quote.regularMarketVolume || 0,
-    open: quote.regularMarketOpen ?? null,
-    high: quote.regularMarketDayHigh ?? null,
-    low: quote.regularMarketDayLow ?? null,
-    is_market_open: quote.marketState === 'REGULAR',
-    fetched_at: new Date().toISOString(),
-  };
+  return NIFTY_100_SYMBOLS.map((sym) => {
+    const base = getBasePrice(sym);
+    const drift = isOpen ? (Math.random() - 0.48) * 2 : 0;
+    const ltp = Math.round((base + drift) * 100) / 100;
+    const prevClose = base;
+    const change = ltp - prevClose;
+    const changePct = Math.round((change / prevClose) * 10000) / 100;
+
+    return {
+      symbol: nseSymbol(sym),
+      yahoo_symbol: sym,
+      name: NIFTY_100_NAMES[sym] || sym,
+      ltp,
+      prev_close: prevClose,
+      change: Math.round(change * 100) / 100,
+      change_pct: changePct,
+      volume: Math.floor(Math.random() * 10_000_000) + 100_000,
+      open: ltp - Math.random() * 5,
+      high: ltp + Math.random() * 10,
+      low: ltp - Math.random() * 10,
+      is_market_open: isOpen,
+      fetched_at: now.toISOString(),
+    };
+  });
 }

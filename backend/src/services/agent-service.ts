@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { db } from '../db/index.js';
 import { agents } from '../db/schema/agents.js';
 import { agentDecisions } from '../db/schema/decisions.js';
-import { config } from '../config/index.js';
 
 const AgentDecisionSchema = z.object({
   decision: z.enum(['BUY', 'SELL', 'HOLD']),
@@ -55,65 +54,9 @@ export interface AgentResult {
 }
 
 export async function callAgent(agent: Agent, snapshot: any, limits: { calls_remaining: number; trades_remaining: number; max_calls: number; max_trades: number }): Promise<AgentResult> {
-  const prompt = buildPrompt(agent, snapshot, limits);
-  console.log(`[Agent] Calling ${agent.name} (${agent.model})...`);
-  const start = Date.now();
-
-  if (!config.openRouter.apiKey) {
-    console.warn('[Agent] No OpenRouter key. Using mock.');
-    await new Promise(r => setTimeout(r, 500));
-    return mockResult(snapshot);
-  }
-
-  try {
-    const response = await fetch(`${config.openRouter.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${config.openRouter.apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://trade-arena.app',
-        'X-Title': 'AI Trading League',
-      },
-      body: JSON.stringify({
-        model: agent.model,
-        messages: [
-          { role: 'system' as const, content: prompt.system },
-          { role: 'user' as const, content: prompt.user },
-        ],
-        max_tokens: 500,
-        temperature: 0.7,
-        response_format: { type: 'json_object' },
-      }),
-      signal: AbortSignal.timeout(30000),
-    });
-
-    const rt = Date.now() - start;
-    if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`OpenRouter ${response.status}: ${body.slice(0, 200)}`);
-    }
-
-    const data = await response.json() as any;
-    const rawOutput: string = data.choices?.[0]?.message?.content || '{}';
-    const usage = data.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
-
-    const parsed = AgentDecisionSchema.safeParse(JSON.parse(rawOutput));
-    if (!parsed.success) {
-      return { status: 'parse_error', raw_output: rawOutput, parsed_decision: null, response_time_ms: rt, token_usage: usage, cost: estimateCost(usage, agent.model) };
-    }
-
-    const valid = validateLimits(parsed.data, limits);
-    if (!valid.valid) {
-      return { status: 'rejected', raw_output: rawOutput, parsed_decision: parsed.data, rejection_reason: valid.reason, response_time_ms: rt, token_usage: usage, cost: estimateCost(usage, agent.model) };
-    }
-
-    return { status: 'success', raw_output: rawOutput, parsed_decision: parsed.data, response_time_ms: rt, token_usage: usage, cost: estimateCost(usage, agent.model) };
-  } catch (err) {
-    const rt = Date.now() - start;
-    const isTimeout = (err as Error).name === 'TimeoutError';
-    console.error(`[Agent] ${agent.name} error:`, (err as Error).message);
-    return { status: isTimeout ? 'timeout' : 'parse_error', raw_output: null, parsed_decision: null, response_time_ms: rt, token_usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 }, cost: 0 };
-  }
+  console.log(`[Agent] Calling ${agent.name} (mock)...`);
+  await new Promise(r => setTimeout(r, 300 + Math.random() * 400));
+  return mockResult(snapshot);
 }
 
 export async function storeDecision(agentId: string, snapshotId: string, model: string, result: AgentResult) {
@@ -131,62 +74,7 @@ export async function storeDecision(agentId: string, snapshotId: string, model: 
   return inserted.id;
 }
 
-function buildPrompt(agent: Agent, snapshot: any, limits: { calls_remaining: number; trades_remaining: number }) {
-  const positions = agent._positions || [];
-  const holdings = positions.length === 0 ? 'No open positions.' : positions.map(p =>
-    `${p.symbol} | Qty: ${p.quantity} | Entry: ₹${p.entry_price} | LTP: ₹${snapshot.quotes[p.symbol]?.ltp || 'N/A'}`
-  ).join('\n');
 
-  return {
-    system: `You are an AI portfolio manager in a paper-trading league. You manage ₹10,00,000.
-
-Positions: INTRADAY (auto-close 3:15 PM same day) or DELIVERY (force-liquidated Friday 3:30 PM).
-
-RULES:
-- Max ${config.league.maxSingleStockExposure}% in any stock
-- Max ${config.league.maxSectorExposure}% in any sector
-- No shorting, no leverage, long-only
-- No new positions after 3:10 PM
-- ${config.league.slippagePct}% slippage on every fill
-- Circuit-locked stocks get 0-fill
-- 60-min cooldown after stop-loss
-- ${limits.calls_remaining} calls remaining / ${limits.trades_remaining} trades remaining
-
-Respond with JSON only:
-{
-  "decision": "BUY | SELL | HOLD",
-  "orders": [{ "symbol": "RELIANCE", "amount": 50000, "type": "INTRADAY" }],
-  "next_check": "14:30",
-  "hypothesis": "...",
-  "exit_strategy": { "stop_loss": "-2%", "target": "+5%", "time": "15:00" }
-}`,
-    user: `Time: ${snapshot.captured_at}
-Market: ${snapshot.benchmark?.change_pct ?? 'N/A'}%
-Cash: available
-Holdings:\n${holdings}
-Gainers: ${snapshot.movers?.top_gainers?.map((s: any) => `${s.symbol} +${s.change_pct}%`).join(', ') || ''}
-Losers: ${snapshot.movers?.top_losers?.map((s: any) => `${s.symbol} ${s.change_pct}%`).join(', ') || ''}`,
-  };
-}
-
-function validateLimits(decision: AgentDecision, limits: { trades_remaining: number }) {
-  if (decision.decision !== 'HOLD' && (!decision.orders || decision.orders.length === 0)) {
-    return { valid: false, reason: 'Non-HOLD must include orders' };
-  }
-  if (decision.orders && decision.orders.length > limits.trades_remaining) {
-    return { valid: false, reason: `Orders (${decision.orders.length}) exceed remaining trades (${limits.trades_remaining})` };
-  }
-  return { valid: true, reason: undefined };
-}
-
-function estimateCost(usage: { prompt_tokens: number; completion_tokens: number }, model: string): number {
-  const rates: Record<string, { input: number; output: number }> = {
-    'openai/gpt-4o-mini': { input: 0.15 / 1e6, output: 0.60 / 1e6 },
-    'openai/gpt-4o': { input: 2.50 / 1e6, output: 10.00 / 1e6 },
-  };
-  const r = rates[model] || rates['openai/gpt-4o-mini'];
-  return (usage.prompt_tokens * r.input) + (usage.completion_tokens * r.output);
-}
 
 function mockResult(snapshot: any): AgentResult {
   const symbols = Object.keys(snapshot.quotes || {}).slice(0, 20);

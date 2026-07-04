@@ -122,7 +122,7 @@ wss.on('connection', (ws: WebSocket) => {
 
 server.listen(config.port, () => {
   console.log(`[App] Trade Arena running on :${config.port}`);
-  console.log(`[App] OpenRouter: ${config.openRouter.apiKey ? 'configured' : 'MOCK MODE'}`);
+  console.log('[App] Agent mode: MOCK (no external AI API configured)');
 });
 
 process.on('SIGTERM', () => { server.close(); redis.quit(); process.exit(0); });
