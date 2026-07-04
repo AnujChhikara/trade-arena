@@ -5,6 +5,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   DATABASE_URL: z.string().default('postgresql://trade_arena:trade_arena_dev@localhost:5432/trade_arena'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
+  OPENROUTER_API_KEY: z.string().default(''),
+  OPENROUTER_BASE_URL: z.string().default('https://openrouter.ai/api/v1'),
   LEAGUE_WEEK_START: z.string().default(''),
   AGENT_COUNT: z.coerce.number().default(5),
   DEFAULT_MAX_CALLS: z.coerce.number().default(10),
@@ -13,6 +15,7 @@ const envSchema = z.object({
   MAX_SECTOR_EXPOSURE: z.coerce.number().default(35),
   SLIPPAGE_PCT: z.coerce.number().default(0.1),
   CIRCUIT_FALLBACK: z.enum(['LTP', 'VWAP']).default('LTP'),
+  YAHOO_FINANCE_ENABLED: z.string().default('true'),
   NIFTY_UNIVERSE_SIZE: z.coerce.number().default(100),
 });
 
@@ -29,6 +32,11 @@ export const config = {
   dbUrl: env.DATABASE_URL,
   redisUrl: env.REDIS_URL,
 
+  openRouter: {
+    apiKey: env.OPENROUTER_API_KEY,
+    baseUrl: env.OPENROUTER_BASE_URL,
+  },
+
   league: {
     weekStart: env.LEAGUE_WEEK_START,
     agentCount: env.AGENT_COUNT,
@@ -38,6 +46,12 @@ export const config = {
     maxSectorExposure: env.MAX_SECTOR_EXPOSURE,
     slippagePct: env.SLIPPAGE_PCT,
     circuitFallback: env.CIRCUIT_FALLBACK,
+  },
+
+  yahooFinance: {
+    enabled: env.YAHOO_FINANCE_ENABLED !== 'false',
+    quoteTtl: 90,
+    batchSize: 20,
   },
 
   checkpoints: ['09:15', '10:15', '11:15', '12:15', '13:15', '14:15', '15:00'] as const,
