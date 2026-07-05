@@ -1,6 +1,7 @@
 {
   "name": "trade-arena-backend",
   "version": "1.0.0",
+  "packageManager": "pnpm@11.10.0",
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/app.ts",
