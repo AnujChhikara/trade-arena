@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import http from 'node:http';
 import { WebSocketServer, WebSocket } from 'ws';
+import rateLimit from 'express-rate-limit';
 import { sql } from 'drizzle-orm';
 import { config } from './config/index.js';
 import { db } from './db/index.js';
@@ -9,6 +10,7 @@ import { agents } from './db/schema/agents.js';
 import { marketSnapshots } from './db/schema/market.js';
 import { agentDecisions } from './db/schema/decisions.js';
 import redis from './config/redis.js';
+import { cacheMiddleware } from './lib/cache.js';
 
 import agentsRouter from './routes/agents.js';
 import leaderboardRouter from './routes/leaderboard.js';
@@ -22,16 +24,34 @@ const wss = new WebSocketServer({ server, path: '/ws' });
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+const generalLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests' },
+});
+app.use(generalLimiter);
+
+function requireServiceKey(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const key = req.headers['x-service-key'];
+  if (!key || key !== config.serviceKey) {
+    res.status(401).json({ error: 'Invalid or missing x-service-key header' });
+    return;
+  }
+  next();
+}
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.use('/api/agents', agentsRouter);
-app.use('/api/leaderboard', leaderboardRouter);
-app.use('/api/snapshots', snapshotsRouter);
-app.use('/api/decisions', decisionsRouter);
+app.use('/api/agents', cacheMiddleware(15_000), agentsRouter);
+app.use('/api/leaderboard', cacheMiddleware(10_000), leaderboardRouter);
+app.use('/api/snapshots', cacheMiddleware(30_000), snapshotsRouter);
+app.use('/api/decisions', cacheMiddleware(15_000), decisionsRouter);
 
-app.get('/api/league/status', async (_req, res) => {
+app.get('/api/league/status', cacheMiddleware(10_000), async (_req, res) => {
   try {
     const now = new Date();
     const day = now.getDay();
@@ -51,7 +71,7 @@ app.get('/api/league/status', async (_req, res) => {
   } catch (err) { res.status(500).json({ error: (err as Error).message }); }
 });
 
-app.post('/api/league/seed-agents', async (_req, res) => {
+app.post('/api/league/seed-agents', requireServiceKey, async (_req, res) => {
   try {
     const existing = await db.select({ count: sql<number>`count(*)` }).from(agents);
     if (existing[0]?.count > 0) { res.json({ message: 'Already seeded' }); return; }

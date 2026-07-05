@@ -5,6 +5,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   DATABASE_URL: z.string().default('postgresql://trade_arena:trade_arena_dev@localhost:5432/trade_arena'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
+  SERVICE_KEY: z.string().default('dev-key'),
   OPENROUTER_API_KEY: z.string().default(''),
   OPENROUTER_BASE_URL: z.string().default('https://openrouter.ai/api/v1'),
   LEAGUE_WEEK_START: z.string().default(''),
@@ -31,6 +32,8 @@ export const config = {
   port: env.PORT,
   dbUrl: env.DATABASE_URL,
   redisUrl: env.REDIS_URL,
+
+  serviceKey: env.SERVICE_KEY,
 
   openRouter: {
     apiKey: env.OPENROUTER_API_KEY,
