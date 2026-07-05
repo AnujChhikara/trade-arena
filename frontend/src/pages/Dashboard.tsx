@@ -1,103 +1,173 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, LeaderboardEntry, DailySnapshot, LeagueStatus } from '../lib/api'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { rupees, pct, compact } from '../lib/format'
+import StatCard from '../components/StatCard'
+import DataTable from '../components/DataTable'
+import {
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart,
+} from 'recharts'
+import {
+  TrendingUp, Clock, Users, Activity, Target,
+} from 'lucide-react'
 
 const COLORS = ['#2563eb', '#dc2626', '#16a34a', '#ca8a04', '#9333ea', '#0891b2', '#be185d']
 
 export default function Dashboard() {
   const nav = useNavigate()
+  const [loading, setLoading] = useState(true)
   const [status, setStatus] = useState<LeagueStatus | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [daily, setDaily] = useState<DailySnapshot[]>([])
 
   useEffect(() => {
-    api.league.status().then(setStatus)
-    api.leaderboard.current().then(setLeaderboard)
-    api.leaderboard.daily().then(setDaily)
+    Promise.all([
+      api.league.status().then(setStatus),
+      api.leaderboard.current().then(setLeaderboard),
+      api.leaderboard.daily().then(setDaily),
+    ]).finally(() => setLoading(false))
   }, [])
 
   const chartData = (() => {
     const agentNames = [...new Set(daily.flatMap(d => d.entries.map(e => e.agentName)))]
     return daily.map(d => {
-      const row: Record<string, any> = { date: d.date }
+      const row: Record<string, any> = { date: d.date.slice(5) }
       for (const e of d.entries) row[e.agentName] = parseFloat(e.capital)
       for (const name of agentNames) if (!(name in row)) row[name] = null
       return row
     })
   })()
-
   const agentNames = [...new Set(daily.flatMap(d => d.entries.map(e => e.agentName)))]
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-pulse flex items-center gap-3 text-[var(--color-arena-muted)]">
+          <Activity size={20} className="animate-spin" />
+          <span className="text-sm">Loading league data...</span>
+        </div>
+      </div>
+    )
+  }
+
+  const topAgent = leaderboard[0]
+  const totalValue = leaderboard.reduce((s, a) => s + a.total_value, 0)
+  const avgReturn = leaderboard.length > 0
+    ? leaderboard.reduce((s, a) => s + a.return_pct, 0) / leaderboard.length
+    : 0
+
   return (
-    <div>
-      <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
-        <StatCard label="Market" value={status?.status === 'active' ? 'Open' : 'Closed'} color={status?.status === 'active' ? '#16a34a' : '#6b7280'} />
-        <StatCard label="Day" value={status?.day || '--'} />
-        <StatCard label="Agents" value={leaderboard.length} />
-        <StatCard label="Next Checkpoint" value={status?.next_checkpoint || '--'} />
+    <div className="space-y-6">
+      {/* Status Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StatCard
+          label="Market"
+          value={status?.status === 'active' ? 'Open' : 'Closed'}
+          icon={status?.status === 'active' ? TrendingUp : Clock}
+          trend={status?.status === 'active' ? { value: 0.5, positive: true } : undefined}
+        />
+        <StatCard label="Day" value={status?.day ? status.day.charAt(0).toUpperCase() + status.day.slice(1) : '--'} icon={Clock} />
+        <StatCard label="Agents" value={leaderboard.length} icon={Users} />
+        <StatCard label="Next Check" value={status?.next_checkpoint || '--'} icon={Target} />
       </div>
 
       {chartData.length > 0 && (
-        <div style={{ background: '#fff', borderRadius: 8, padding: 24, marginBottom: 24, border: '1px solid #e5e7eb' }}>
-          <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 600 }}>Portfolio Value Over Time</h3>
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-              <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
-              <Tooltip />
-              <Legend />
-              {agentNames.map((name, i) => (
-                <Line key={name} type="monotone" dataKey={name} stroke={COLORS[i % COLORS.length]} strokeWidth={2} dot={false} connectNulls />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="bg-white rounded-xl border border-[var(--color-arena-border)] shadow-sm">
+          <div className="px-6 py-4 border-b border-[var(--color-arena-border)]">
+            <h3 className="text-sm font-semibold text-[var(--color-arena-text)]">Portfolio Value Over Time</h3>
+          </div>
+          <div className="p-6">
+            <ResponsiveContainer width="100%" height={350}>
+              <AreaChart data={chartData}>
+                <defs>
+                  {agentNames.map((name, i) => (
+                    <linearGradient key={name} id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS[i % COLORS.length]} stopOpacity={0.1} />
+                      <stop offset="95%" stopColor={COLORS[i % COLORS.length]} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} stroke="#e2e8f0" />
+                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} stroke="#e2e8f0" tickFormatter={(v: number) => compact(v)} />
+                <Tooltip
+                  contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }}
+                  formatter={(v: any) => [rupees(Number(v) || 0), '']}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
+                {agentNames.map((name, i) => (
+                  <Area
+                    key={name}
+                    type="monotone"
+                    dataKey={name}
+                    stroke={COLORS[i % COLORS.length]}
+                    strokeWidth={2}
+                    fill={`url(#grad-${i})`}
+                    dot={false}
+                    connectNulls
+                  />
+                ))}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       )}
 
-      <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e5e7eb', background: '#f9fafb' }}>
-              <Th>#</Th>
-              <Th>Agent</Th>
-              <Th>Persona</Th>
-              <Th>Model</Th>
-              <Th style={{ textAlign: 'right' }}>Portfolio Value</Th>
-              <Th style={{ textAlign: 'right' }}>Return</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {leaderboard.map((a, i) => (
-              <tr key={a.id} onClick={() => nav(`/agents/${a.id}`)} style={{ cursor: 'pointer', borderBottom: '1px solid #f3f4f6' }}>
-                <td style={{ padding: '10px 16px', textAlign: 'center', fontWeight: 600, color: i < 3 ? '#2563eb' : '#6b7280' }}>{a.rank}</td>
-                <td style={{ padding: '10px 16px', fontWeight: 500 }}>{a.name}</td>
-                <td style={{ padding: '10px 16px', color: '#6b7280', textTransform: 'capitalize' }}>{a.persona || '--'}</td>
-                <td style={{ padding: '10px 16px', color: '#6b7280', fontSize: 13 }}>{a.model}</td>
-                <td style={{ padding: '10px 16px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>₹{a.total_value.toLocaleString()}</td>
-                <td style={{ padding: '10px 16px', textAlign: 'right', color: a.return_pct >= 0 ? '#16a34a' : '#dc2626', fontWeight: 600 }}>{a.return_pct >= 0 ? '+' : ''}{a.return_pct}%</td>
-              </tr>
-            ))}
-            {leaderboard.length === 0 && (
-              <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: '#9ca3af' }}>No agents seeded yet. POST /api/league/seed-agents</td></tr>
-            )}
-          </tbody>
-        </table>
+      {/* Summary Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatCard label="Total Portfolio Value" value={rupees(totalValue)} icon={Activity} />
+        <StatCard
+          label="Average Return"
+          value={avgReturn >= 0 ? `+${avgReturn.toFixed(2)}%` : `${avgReturn.toFixed(2)}%`}
+          icon={TrendingUp}
+          trend={avgReturn >= 0 ? { value: avgReturn, positive: true } : { value: Math.abs(avgReturn), positive: false }}
+        />
+        <StatCard
+          label="Leader"
+          value={topAgent?.name || '--'}
+          icon={Users}
+        />
       </div>
-    </div>
-  )
-}
 
-function Th({ children, style: s }: any) {
-  return <th style={{ padding: '10px 16px', fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', textAlign: 'left', ...s }}>{children}</th>
-}
-
-function StatCard({ label, value, color }: { label: string; value: string | number; color?: string }) {
-  return (
-    <div style={{ flex: 1, background: '#fff', borderRadius: 8, padding: '16px 20px', border: '1px solid #e5e7eb' }}>
-      <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: color || '#111827' }}>{value}</div>
+      {/* Leaderboard */}
+          <div className="bg-white rounded-xl border border-[var(--color-arena-border)] shadow-sm">
+        <div className="px-6 py-4 border-b border-[var(--color-arena-border)] flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-[var(--color-arena-text)]">Leaderboard</h3>
+          <span className="text-xs text-[var(--color-arena-muted)]">{leaderboard.length} agents</span>
+        </div>
+        <DataTable
+          columns={[
+            { key: 'rank', label: '#', align: 'center', className: 'w-10', render: (a: LeaderboardEntry) => (
+              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                a.rank === 1 ? 'bg-yellow-100 text-yellow-700' :
+                a.rank === 2 ? 'bg-slate-100 text-slate-500' :
+                a.rank === 3 ? 'bg-orange-100 text-orange-700' :
+                'text-[var(--color-arena-muted)]'
+              }`}>{a.rank}</span>
+            )},
+            { key: 'name', label: 'Agent', render: (a: LeaderboardEntry) => (
+              <div>
+              <div className="font-medium text-[var(--color-arena-text)]">{a.name}</div>
+              <div className="text-xs text-[var(--color-arena-muted)]">{a.model}</div>
+              </div>
+            )},
+            { key: 'persona', label: 'Persona', hideOnMobile: true, render: (a: LeaderboardEntry) => (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">{a.persona || 'balanced'}</span>
+            )},
+            { key: 'total_value', label: 'Portfolio', align: 'right', render: (a: LeaderboardEntry) => (
+              <span className="font-medium tabular-nums">{rupees(a.total_value)}</span>
+            )},
+            { key: 'return_pct', label: 'Return', align: 'right', render: (a: LeaderboardEntry) => (
+              <span className={`font-semibold tabular-nums ${a.return_pct >= 0 ? 'text-[var(--color-arena-success)]' : 'text-[var(--color-arena-danger)]'}`}>
+                {pct(a.return_pct)}
+              </span>
+            )},
+          ]}
+          data={leaderboard}
+          onRowClick={(a) => nav(`/agents/${a.id}`)}
+          emptyMessage="No agents seeded yet. POST /api/league/seed-agents with x-service-key header."
+        />
+      </div>
     </div>
   )
 }
