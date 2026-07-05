@@ -6,10 +6,7 @@
     "dev": "tsx watch src/app.ts",
     "build": "tsc",
     "start": "node dist/app.js",
-    "worker:snapshot": "tsx src/workers/snapshot-worker.ts",
-    "worker:execution": "tsx src/workers/execution-worker.ts",
-    "worker:risk": "tsx src/workers/risk-worker.ts",
-    "worker:scoring": "tsx src/workers/scoring-worker.ts",
+
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:studio": "drizzle-kit studio"

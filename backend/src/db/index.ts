@@ -6,6 +6,7 @@ import * as marketSchema from './schema/market.js';
 import * as decisionsSchema from './schema/decisions.js';
 import * as positionsSchema from './schema/positions.js';
 import * as leaderboardSchema from './schema/leaderboard.js';
+import * as leagueSchema from './schema/league.js';
 
 const pool = new pg.Pool({
   connectionString: config.dbUrl,
@@ -25,6 +26,7 @@ export const db = drizzle(pool, {
     ...decisionsSchema,
     ...positionsSchema,
     ...leaderboardSchema,
+    ...leagueSchema,
   },
   logger: false,
 });

@@ -21,22 +21,3 @@ export const agentDailyLimits = pgTable('agent_daily_limits', {
   maxTrades: numeric('max_trades').default('20'),
   violations: text('violations').array().default([]),
 });
-
-export const agentSchedules = pgTable('agent_schedules', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  agentId: uuid('agent_id').references(() => agents.id, { onDelete: 'cascade' }),
-  wakeTime: timestamp('wake_time', { withTimezone: true }).notNull(),
-  source: text('source', { enum: ['default', 'agent_requested'] }),
-  reason: text('reason'),
-  used: boolean('used').default(false),
-});
-
-export const agentMemory = pgTable('agent_memory', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  agentId: uuid('agent_id').references(() => agents.id, { onDelete: 'cascade' }),
-  week: text('week').notNull(),
-  strengths: text('strengths').array(),
-  mistakes: text('mistakes').array(),
-  coachNotes: text('coach_notes'),
-  metrics: text('metrics'),
-});

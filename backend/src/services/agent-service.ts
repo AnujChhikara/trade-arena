@@ -102,7 +102,7 @@ export async function callAgent(agent: Agent, snapshot: any, limits: { calls_rem
       return { status: 'parse_error', raw_output: rawOutput, parsed_decision: null, response_time_ms: rt, token_usage: usage, cost: estimateCost(usage, agent.model) };
     }
 
-    const valid = validateLimits(parsed.data, limits);
+    const valid = validateDecision(parsed.data, limits, agent._positions || []);
     if (!valid.valid) {
       return { status: 'rejected', raw_output: rawOutput, parsed_decision: parsed.data, rejection_reason: valid.reason, response_time_ms: rt, token_usage: usage, cost: estimateCost(usage, agent.model) };
     }
@@ -133,48 +133,71 @@ export async function storeDecision(agentId: string, snapshotId: string, model: 
 
 function buildPrompt(agent: Agent, snapshot: any, limits: { calls_remaining: number; trades_remaining: number }) {
   const positions = agent._positions || [];
+  const totalValue = parseFloat(agent.capital || '1000000');
   const holdings = positions.length === 0 ? 'No open positions.' : positions.map(p =>
-    `${p.symbol} | Qty: ${p.quantity} | Entry: ₹${p.entry_price} | LTP: ₹${snapshot.quotes[p.symbol]?.ltp || 'N/A'}`
+    `${p.symbol} | Qty: ${p.quantity} | Entry: ₹${p.entry_price} | LTP: ₹${snapshot.quotes[p.symbol]?.ltp || 'N/A'} | Unrealized P&L: ₹${((snapshot.quotes[p.symbol]?.ltp || 0) - parseFloat(p.entry_price)) * p.quantity}`
   ).join('\n');
 
+  const invested = positions.reduce((s, p) => s + p.quantity * parseFloat(p.entry_price), 0);
+  const cashAvailable = totalValue - invested;
+
   return {
-    system: `You are an AI portfolio manager in a paper-trading league. You manage ₹10,00,000.
+    system: `You are ${agent.name}, an AI portfolio manager in a paper-trading league.
+Your persona: ${agent.persona || 'Balanced trader'}.
+You manage ₹10,00,000 capital.
 
-Positions: INTRADAY (auto-close 3:15 PM same day) or DELIVERY (force-liquidated Friday 3:30 PM).
+LEAGUE RULES (strictly enforced):
+- Long-only. No shorting, no leverage, no derivatives.
+- You CANNOT sell a stock you do not hold in your positions.
+- Each BUY or SELL order must include symbol, amount (₹), and type (INTRADAY or DELIVERY).
+- INTRADAY positions auto-close at 3:15 PM same day.
+- DELIVERY positions force-liquidated Friday 3:30 PM.
+- Max ${config.league.maxSingleStockExposure}% of capital in any single stock.
+- Max ${config.league.maxSectorExposure}% in any sector.
+- ${config.league.slippagePct}% slippage applied on every fill.
+- Circuit-locked stocks get zero fill (cannot buy upper circuit, cannot sell lower circuit).
+- 60-min cooldown after a stop-loss hit.
+- No new positions after 3:10 PM.
+- ${limits.calls_remaining} API calls remaining today / ${limits.trades_remaining} trades remaining today.
 
-RULES:
-- Max ${config.league.maxSingleStockExposure}% in any stock
-- Max ${config.league.maxSectorExposure}% in any sector
-- No shorting, no leverage, long-only
-- No new positions after 3:10 PM
-- ${config.league.slippagePct}% slippage on every fill
-- Circuit-locked stocks get 0-fill
-- 60-min cooldown after stop-loss
-- ${limits.calls_remaining} calls remaining / ${limits.trades_remaining} trades remaining
+YOUR CURRENT PORTFOLIO:
+${holdings}
+
+Cash available: ₹${Math.round(cashAvailable).toLocaleString()}
+Portfolio value: ₹${Math.round(totalValue).toLocaleString()}
 
 Respond with JSON only:
 {
   "decision": "BUY | SELL | HOLD",
   "orders": [{ "symbol": "RELIANCE", "amount": 50000, "type": "INTRADAY" }],
   "next_check": "14:30",
-  "hypothesis": "...",
+  "hypothesis": "Brief reasoning for your decision",
   "exit_strategy": { "stop_loss": "-2%", "target": "+5%", "time": "15:00" }
 }`,
-    user: `Time: ${snapshot.captured_at}
-Market: ${snapshot.benchmark?.change_pct ?? 'N/A'}%
-Cash: available
-Holdings:\n${holdings}
+    user: `Current time: ${snapshot.captured_at}
+Market benchmark: ${snapshot.benchmark?.change_pct ?? 'N/A'}%
 Gainers: ${snapshot.movers?.top_gainers?.map((s: any) => `${s.symbol} +${s.change_pct}%`).join(', ') || ''}
-Losers: ${snapshot.movers?.top_losers?.map((s: any) => `${s.symbol} ${s.change_pct}%`).join(', ') || ''}`,
+Losers: ${snapshot.movers?.top_losers?.map((s: any) => `${s.symbol} ${s.change_pct}%`).join(', ') || ''}
+Sector trends: ${Object.entries(snapshot.sector_summary || {}).map(([s, d]: any) => `${s} ${d.avg_change > 0 ? '+' : ''}${d.avg_change}%`).join(', ')}`,
   };
 }
 
-function validateLimits(decision: AgentDecision, limits: { trades_remaining: number }) {
+function validateDecision(decision: AgentDecision, limits: { trades_remaining: number }, positions: AgentPosition[]) {
   if (decision.decision !== 'HOLD' && (!decision.orders || decision.orders.length === 0)) {
     return { valid: false, reason: 'Non-HOLD must include orders' };
   }
   if (decision.orders && decision.orders.length > limits.trades_remaining) {
     return { valid: false, reason: `Orders (${decision.orders.length}) exceed remaining trades (${limits.trades_remaining})` };
+  }
+  if (decision.orders) {
+    for (const order of decision.orders) {
+      if (decision.decision === 'SELL') {
+        const held = positions.some(p => p.symbol === order.symbol && p.quantity > 0);
+        if (!held) {
+          return { valid: false, reason: `Cannot SELL ${order.symbol} - no open position held` };
+        }
+      }
+    }
   }
   return { valid: true, reason: undefined };
 }

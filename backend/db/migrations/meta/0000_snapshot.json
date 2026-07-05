@@ -1,5 +1,5 @@
 {
-  "id": "c0103df7-9a64-48fd-89ec-6261431e618c",
+  "id": "082ae5a0-3eac-4016-935f-a80472043ebf",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -68,141 +68,6 @@
         "agent_daily_limits_agent_id_agents_id_fk": {
           "name": "agent_daily_limits_agent_id_agents_id_fk",
           "tableFrom": "agent_daily_limits",
-          "tableTo": "agents",
-          "columnsFrom": [
-            "agent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.agent_memory": {
-      "name": "agent_memory",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "agent_id": {
-          "name": "agent_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "week": {
-          "name": "week",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "strengths": {
-          "name": "strengths",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "mistakes": {
-          "name": "mistakes",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "coach_notes": {
-          "name": "coach_notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metrics": {
-          "name": "metrics",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "agent_memory_agent_id_agents_id_fk": {
-          "name": "agent_memory_agent_id_agents_id_fk",
-          "tableFrom": "agent_memory",
-          "tableTo": "agents",
-          "columnsFrom": [
-            "agent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.agent_schedules": {
-      "name": "agent_schedules",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "agent_id": {
-          "name": "agent_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "wake_time": {
-          "name": "wake_time",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "source": {
-          "name": "source",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reason": {
-          "name": "reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "used": {
-          "name": "used",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "agent_schedules_agent_id_agents_id_fk": {
-          "name": "agent_schedules_agent_id_agents_id_fk",
-          "tableFrom": "agent_schedules",
           "tableTo": "agents",
           "columnsFrom": [
             "agent_id"
@@ -729,6 +594,38 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.league_config": {
+      "name": "league_config",
+      "schema": "",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

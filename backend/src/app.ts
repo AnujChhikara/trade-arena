@@ -2,11 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import http from 'node:http';
 import { WebSocketServer, WebSocket } from 'ws';
+import { sql } from 'drizzle-orm';
 import { config } from './config/index.js';
 import { db } from './db/index.js';
+import { agents } from './db/schema/agents.js';
 import { marketSnapshots } from './db/schema/market.js';
 import { agentDecisions } from './db/schema/decisions.js';
-import { sql } from 'drizzle-orm';
 import redis from './config/redis.js';
 
 import agentsRouter from './routes/agents.js';
@@ -19,6 +20,7 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 
 app.use(cors({ origin: '*' }));
+app.use(express.json());
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -46,6 +48,25 @@ app.get('/api/league/status', async (_req, res) => {
       is_friday: day === 5, next_checkpoint: nextCp,
       snapshot_count: snapCount?.count || 0, decision_count: decCount?.count || 0,
     });
+  } catch (err) { res.status(500).json({ error: (err as Error).message }); }
+});
+
+app.post('/api/league/seed-agents', async (_req, res) => {
+  try {
+    const existing = await db.select({ count: sql<number>`count(*)` }).from(agents);
+    if (existing[0]?.count > 0) { res.json({ message: 'Already seeded' }); return; }
+
+    const defaults = [
+      { name: 'Alpha GPT', model: 'openai/gpt-4o-mini', persona: 'momentum', systemPrompt: 'Aggressive momentum trader. Chases breakouts with tight stops. Prefers INTRADAY.' },
+      { name: 'Claude Analyzer', model: 'anthropic/claude-3.5-haiku', persona: 'value', systemPrompt: 'Value-oriented investor. Buys dips, holds DELIVERY, wide stops. Fundamental analysis focus.' },
+      { name: 'Kimi Surge', model: 'moonshot/kimi-8k', persona: 'scalper', systemPrompt: 'Quick intraday scalper. Small consistent profits, strict risk management. Only INTRADAY.' },
+      { name: 'GLM Sentinel', model: 'zhipu/glm-4-9b', persona: 'balanced', systemPrompt: 'Balanced portfolio manager. Diversified across sectors, manages risk-reward ratio.' },
+    ];
+
+    for (const a of defaults) {
+      await db.insert(agents).values(a);
+    }
+    res.status(201).json({ message: `Seeded ${defaults.length} agents` });
   } catch (err) { res.status(500).json({ error: (err as Error).message }); }
 });
 

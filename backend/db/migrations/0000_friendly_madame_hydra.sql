@@ -9,25 +9,6 @@ CREATE TABLE "agent_daily_limits" (
 	"violations" text[] DEFAULT '{}'
 );
 --> statement-breakpoint
-CREATE TABLE "agent_memory" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"agent_id" uuid,
-	"week" text NOT NULL,
-	"strengths" text[],
-	"mistakes" text[],
-	"coach_notes" text,
-	"metrics" text
-);
---> statement-breakpoint
-CREATE TABLE "agent_schedules" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"agent_id" uuid,
-	"wake_time" timestamp with time zone NOT NULL,
-	"source" text,
-	"reason" text,
-	"used" boolean DEFAULT false
-);
---> statement-breakpoint
 CREATE TABLE "agents" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
@@ -101,6 +82,12 @@ CREATE TABLE "leaderboard_weekly" (
 	CONSTRAINT "leaderboard_weekly_week_agent_id_unique" UNIQUE("week","agent_id")
 );
 --> statement-breakpoint
+CREATE TABLE "league_config" (
+	"key" text PRIMARY KEY NOT NULL,
+	"value" jsonb NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now()
+);
+--> statement-breakpoint
 CREATE TABLE "market_snapshots" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"captured_at" timestamp with time zone NOT NULL,
@@ -140,8 +127,6 @@ CREATE TABLE "positions" (
 );
 --> statement-breakpoint
 ALTER TABLE "agent_daily_limits" ADD CONSTRAINT "agent_daily_limits_agent_id_agents_id_fk" FOREIGN KEY ("agent_id") REFERENCES "public"."agents"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "agent_memory" ADD CONSTRAINT "agent_memory_agent_id_agents_id_fk" FOREIGN KEY ("agent_id") REFERENCES "public"."agents"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "agent_schedules" ADD CONSTRAINT "agent_schedules_agent_id_agents_id_fk" FOREIGN KEY ("agent_id") REFERENCES "public"."agents"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agent_decisions" ADD CONSTRAINT "agent_decisions_agent_id_agents_id_fk" FOREIGN KEY ("agent_id") REFERENCES "public"."agents"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "agent_decisions" ADD CONSTRAINT "agent_decisions_snapshot_id_market_snapshots_id_fk" FOREIGN KEY ("snapshot_id") REFERENCES "public"."market_snapshots"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "orders" ADD CONSTRAINT "orders_agent_id_agents_id_fk" FOREIGN KEY ("agent_id") REFERENCES "public"."agents"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
