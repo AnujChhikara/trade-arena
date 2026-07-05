@@ -33,4 +33,5 @@ export const orders = pgTable('orders', {
   status: text('status', { enum: ['pending', 'filled', 'partial', 'rejected', 'circuit_locked'] }).default('pending'),
   executedAt: timestamp('executed_at', { withTimezone: true }),
   rejectionReason: text('rejection_reason'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });

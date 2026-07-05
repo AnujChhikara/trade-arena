@@ -7,6 +7,12 @@ function isMarketOpen(): boolean {
   return day >= 1 && day <= 5 && ist >= 915 && ist <= 1530;
 }
 
+function isFridayLiquidation(): boolean {
+  const now = new Date();
+  const ist = now.getHours() * 100 + now.getMinutes();
+  return now.getDay() === 5 && ist >= 1530 && ist < 1545;
+}
+
 export function startScheduler() {
   console.log('[Scheduler] Auto-scheduler started (every 15 min during market hours)');
 
@@ -22,6 +28,14 @@ export function startScheduler() {
       await runCheckpoint();
       const filled = await processPendingOrders();
       const closed = await checkRiskRules();
+
+      const { writeAllLeaderboardDaily, settleWeekly } = await import('../services/leaderboard-service.js');
+      await writeAllLeaderboardDaily();
+
+      if (isFridayLiquidation()) {
+        await settleWeekly();
+      }
+
       console.log(`[Scheduler] Tick done — ${filled} orders filled, ${closed} positions closed`);
     } catch (err) {
       console.error('[Scheduler] Tick error:', (err as Error).message);

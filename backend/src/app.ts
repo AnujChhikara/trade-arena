@@ -12,6 +12,7 @@ import { agentDecisions } from './db/schema/decisions.js';
 import redis from './config/redis.js';
 import { cacheMiddleware } from './lib/cache.js';
 import { startScheduler } from './lib/scheduler.js';
+import { seedLeagueConfig } from './lib/seed.js';
 
 import agentsRouter from './routes/agents.js';
 import leaderboardRouter from './routes/leaderboard.js';
@@ -100,9 +101,10 @@ wss.on('connection', (ws: WebSocket) => {
   ws.send(JSON.stringify({ channel: 'connected', timestamp: new Date().toISOString() }));
 });
 
-server.listen(config.port, () => {
+server.listen(config.port, async () => {
   console.log(`[App] Trade Arena running on :${config.port}`);
   console.log(`[App] OpenRouter: ${config.openRouter.apiKey ? 'configured' : 'MOCK MODE'}`);
+  await seedLeagueConfig();
   startScheduler();
 });
 

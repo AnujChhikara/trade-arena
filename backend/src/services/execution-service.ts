@@ -89,6 +89,11 @@ async function executeOrder(order: typeof orders.$inferSelect) {
     const filled = qty - sellQty;
     await db.update(orders).set({ executedPrice: String(exPrice), quantity: filled, status: filled > 0 ? 'filled' : 'rejected', executedAt: new Date() }).where(eq(orders.id, order.id));
     console.log(`[Exec] SELL ${order.symbol} ${filled}@${exPrice} PnL:₹${totalPnl}`);
+
+    if (totalPnl !== 0) {
+      const [agent] = await db.select({ capital: agents.capital }).from(agents).where(eq(agents.id, order.agentId!));
+      await db.update(agents).set({ capital: String(parseFloat(agent.capital) + totalPnl) }).where(eq(agents.id, order.agentId!));
+    }
   }
 }
 
@@ -108,15 +113,11 @@ async function getAvailableCash(agentId: string): Promise<number> {
   if (!a) return 0;
   const capital = parseFloat(a.capital || '1000000');
 
-  const inv = await db.select({ total: positions.entryPrice }).from(positions)
+  const inv = await db.select({ price: positions.entryPrice, qty: positions.quantity }).from(positions)
     .where(and(eq(positions.agentId, agentId), eq(positions.status, 'open')));
-  const invested = inv.reduce((s, r) => s + parseFloat(r.total || '0'), 0);
+  const invested = inv.reduce((s, r) => s + parseFloat(r.price || '0') * r.qty, 0);
 
-  const rlz = await db.select({ total: positions.realizedPnl }).from(positions)
-    .where(eq(positions.agentId, agentId));
-  const realized = rlz.reduce((s, r) => s + parseFloat(r.total || '0'), 0);
-
-  return capital + realized - invested;
+  return capital - invested;
 }
 
 async function checkExposure(agentId: string, symbol: string, buyAmount: number): Promise<boolean> {
