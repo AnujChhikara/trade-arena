@@ -1,0 +1,54 @@
+name: Deploy to Homelab
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  API_IMAGE: ghcr.io/anujchhikara/trade-arena-api
+  FRONTEND_IMAGE: ghcr.io/anujchhikara/trade-arena-frontend
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build API image
+        run: |
+          docker build \
+            -t ${{ env.API_IMAGE }}:latest \
+            -t ${{ env.API_IMAGE }}:${GITHUB_SHA::7} \
+            ./backend
+
+      - name: Build Frontend image
+        run: |
+          docker build \
+            -t ${{ env.FRONTEND_IMAGE }}:latest \
+            -t ${{ env.FRONTEND_IMAGE }}:${GITHUB_SHA::7} \
+            ./frontend
+
+      - name: Push to ghcr.io
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GITHUB_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ${{ env.API_IMAGE }}:latest
+          docker push ${{ env.API_IMAGE }}:${GITHUB_SHA::7}
+          docker push ${{ env.FRONTEND_IMAGE }}:latest
+          docker push ${{ env.FRONTEND_IMAGE }}:${GITHUB_SHA::7}
+
+      - name: Deploy
+        run: |
+          cd ~/homelab/trade-arena
+          docker compose pull
+          docker compose up -d --remove-orphans
+          docker restart caddy
+          echo "Deployed at $(date)"
+          docker compose ps

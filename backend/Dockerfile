@@ -1,18 +1,15 @@
-FROM node:22-alpine AS base
-RUN corepack enable && corepack prepare pnpm@latest --activate
+FROM node:22-alpine AS builder
 WORKDIR /app
-
-FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
-
-FROM deps AS builder
-COPY . .
+RUN corepack enable && pnpm install --frozen-lockfile
+COPY tsconfig.json ./
+COPY src ./src
 RUN pnpm build
 
-FROM base AS runner
-ENV NODE_ENV=production
-COPY --from=builder /app/node_modules ./node_modules
+FROM node:22-alpine
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile --prod
 COPY --from=builder /app/dist ./dist
 EXPOSE 3001
 CMD ["node", "dist/app.js"]

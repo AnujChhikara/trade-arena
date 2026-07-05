@@ -1,32 +1,56 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: trade-arena-db
-    environment:
-      POSTGRES_DB: trade_arena
-      POSTGRES_USER: trade_arena
-      POSTGRES_PASSWORD: trade_arena_dev
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./db/migrations:/docker-entrypoint-initdb.d
+  trade-arena-api:
+    image: ghcr.io/anujchhikara/trade-arena-api:latest
+    container_name: trade-arena-api
+    restart: unless-stopped
+    env_file: .env
+    expose:
+      - "3001"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U trade_arena"]
-      interval: 5s
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/api/health"]
+      interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+    networks:
+      - compose_default
+      - homelab
 
-  redis:
-    image: redis:7-alpine
-    container_name: trade-arena-redis
-    ports:
-      - "6379:6379"
+  trade-arena-frontend:
+    image: ghcr.io/anujchhikara/trade-arena-frontend:latest
+    container_name: trade-arena-frontend
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - trade-arena-api
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/"]
+      interval: 15s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+    networks:
+      - homelab
 
-volumes:
-  pgdata:
+networks:
+  compose_default:
+    external: true
+  homelab:
+    external: true
