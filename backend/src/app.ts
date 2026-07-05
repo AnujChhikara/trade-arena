@@ -46,12 +46,12 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.use('/api/agents', cacheMiddleware(15_000), agentsRouter);
-app.use('/api/leaderboard', cacheMiddleware(10_000), leaderboardRouter);
-app.use('/api/snapshots', cacheMiddleware(30_000), snapshotsRouter);
-app.use('/api/decisions', cacheMiddleware(15_000), decisionsRouter);
+app.use('/api/agents', cacheMiddleware(1_800_000), agentsRouter);
+app.use('/api/leaderboard', cacheMiddleware(600_000), leaderboardRouter);
+app.use('/api/snapshots', cacheMiddleware(900_000), snapshotsRouter);
+app.use('/api/decisions', cacheMiddleware(900_000), decisionsRouter);
 
-app.get('/api/league/status', cacheMiddleware(10_000), async (_req, res) => {
+app.get('/api/league/status', cacheMiddleware(300_000), async (_req, res) => {
   try {
     const now = new Date();
     const day = now.getDay();
