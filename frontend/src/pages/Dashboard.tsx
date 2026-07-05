@@ -42,7 +42,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-pulse flex items-center gap-3 text-[var(--color-arena-muted)]">
+        <div className="animate-pulse flex items-center gap-3 text-arena-muted">
           <Activity size={20} className="animate-spin" />
           <span className="text-sm">Loading league data...</span>
         </div>
@@ -58,13 +58,11 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Status Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
           label="Market"
           value={status?.status === 'active' ? 'Open' : 'Closed'}
           icon={status?.status === 'active' ? TrendingUp : Clock}
-          trend={status?.status === 'active' ? { value: 0.5, positive: true } : undefined}
         />
         <StatCard label="Day" value={status?.day ? status.day.charAt(0).toUpperCase() + status.day.slice(1) : '--'} icon={Clock} />
         <StatCard label="Agents" value={leaderboard.length} icon={Users} />
@@ -72,9 +70,9 @@ export default function Dashboard() {
       </div>
 
       {chartData.length > 0 && (
-        <div className="bg-white rounded-xl border border-[var(--color-arena-border)] shadow-sm">
-          <div className="px-6 py-4 border-b border-[var(--color-arena-border)]">
-            <h3 className="text-sm font-semibold text-[var(--color-arena-text)]">Portfolio Value Over Time</h3>
+        <div className="bg-white rounded-xl border border-arena-border shadow-sm">
+          <div className="px-6 py-4 border-b border-arena-border">
+            <h3 className="text-sm font-semibold text-arena-text">Portfolio Value Over Time</h3>
           </div>
           <div className="p-6">
             <ResponsiveContainer width="100%" height={350}>
@@ -113,7 +111,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Summary Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard label="Total Portfolio Value" value={rupees(totalValue)} icon={Activity} />
         <StatCard
@@ -129,11 +126,10 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Leaderboard */}
-          <div className="bg-white rounded-xl border border-[var(--color-arena-border)] shadow-sm">
-        <div className="px-6 py-4 border-b border-[var(--color-arena-border)] flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-[var(--color-arena-text)]">Leaderboard</h3>
-          <span className="text-xs text-[var(--color-arena-muted)]">{leaderboard.length} agents</span>
+      <div className="bg-white rounded-xl border border-arena-border shadow-sm">
+        <div className="px-6 py-4 border-b border-arena-border flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-arena-text">Leaderboard</h3>
+          <span className="text-xs text-arena-muted">{leaderboard.length} agents</span>
         </div>
         <DataTable
           columns={[
@@ -142,13 +138,13 @@ export default function Dashboard() {
                 a.rank === 1 ? 'bg-yellow-100 text-yellow-700' :
                 a.rank === 2 ? 'bg-slate-100 text-slate-500' :
                 a.rank === 3 ? 'bg-orange-100 text-orange-700' :
-                'text-[var(--color-arena-muted)]'
+                'text-arena-muted'
               }`}>{a.rank}</span>
             )},
             { key: 'name', label: 'Agent', render: (a: LeaderboardEntry) => (
               <div>
-              <div className="font-medium text-[var(--color-arena-text)]">{a.name}</div>
-              <div className="text-xs text-[var(--color-arena-muted)]">{a.model}</div>
+                <div className="font-medium text-arena-text">{a.name}</div>
+                <div className="text-xs text-arena-muted">{a.model}</div>
               </div>
             )},
             { key: 'persona', label: 'Persona', hideOnMobile: true, render: (a: LeaderboardEntry) => (
@@ -158,7 +154,7 @@ export default function Dashboard() {
               <span className="font-medium tabular-nums">{rupees(a.total_value)}</span>
             )},
             { key: 'return_pct', label: 'Return', align: 'right', render: (a: LeaderboardEntry) => (
-              <span className={`font-semibold tabular-nums ${a.return_pct >= 0 ? 'text-[var(--color-arena-success)]' : 'text-[var(--color-arena-danger)]'}`}>
+              <span className={`font-semibold tabular-nums ${a.return_pct >= 0 ? 'text-arena-success' : 'text-arena-danger'}`}>
                 {pct(a.return_pct)}
               </span>
             )},

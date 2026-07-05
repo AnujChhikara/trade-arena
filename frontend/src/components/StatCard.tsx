@@ -10,10 +10,10 @@ interface StatCardProps {
 
 export default function StatCard({ label, value, icon: Icon, trend, className = '' }: StatCardProps) {
   return (
-    <div className={`bg-white rounded-xl border border-[var(--color-arena-border)] shadow-sm p-5 ${className}`}>
+    <div className={`bg-white rounded-xl border border-arena-border shadow-sm p-5 ${className}`}>
       <div className="flex items-start justify-between">
         <div>
-          <div className="text-xs font-medium text-[var(--color-arena-muted)] uppercase tracking-wider mb-1">{label}</div>
+          <div className="text-xs font-medium text-arena-muted uppercase tracking-wider mb-1">{label}</div>
           <div className="text-2xl font-bold tracking-tight">{value}</div>
           {trend && (
             <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${trend.positive ? 'text-arena-success' : 'text-arena-danger'}`}>

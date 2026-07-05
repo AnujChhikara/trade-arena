@@ -1,18 +1,18 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, BarChart3, TrendingUp, Bug } from 'lucide-react'
+import { BarChart3, TrendingUp, Bug } from 'lucide-react'
 
 const links = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/', label: 'Dashboard', icon: BarChart3, end: true },
   { to: '/replay', label: 'Replay', icon: BarChart3 },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex">
-      <aside className="w-64 bg-white border-r border-[var(--color-arena-border)] flex flex-col shrink-0">
-        <div className="h-14 flex items-center gap-2.5 px-5 border-b border-[var(--color-arena-border)]">
-          <TrendingUp size={20} className="text-[var(--color-arena-primary)]" />
-          <span className="font-bold text-base text-[var(--color-arena-text)]">Trade Arena</span>
+      <aside className="w-64 bg-white border-r border-arena-border flex flex-col shrink-0">
+        <div className="h-14 flex items-center gap-2.5 px-5 border-b border-arena-border">
+          <TrendingUp size={20} className="text-arena-primary" />
+          <span className="font-bold text-base text-arena-text">Trade Arena</span>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {links.map(l => (
@@ -22,7 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               end={l.end}
               className={({ isActive }) =>
                 `flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive ? 'bg-[var(--color-arena-primary-light)] text-[var(--color-arena-primary)]' : 'text-[var(--color-arena-muted)] hover:bg-slate-100 hover:text-[var(--color-arena-text)]'
+                  isActive ? 'bg-arena-primary-light text-arena-primary' : 'text-arena-muted hover:bg-slate-100 hover:text-arena-text'
                 }`
               }
             >
@@ -31,8 +31,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <div className="p-3 border-t border-[var(--color-arena-border)]">
-          <div className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--color-arena-muted)]">
+        <div className="p-3 border-t border-arena-border">
+          <div className="flex items-center gap-2 px-3 py-2 text-xs text-arena-muted">
             <Bug size={14} />
             v1.0.0
           </div>
@@ -40,8 +40,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </aside>
 
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 bg-white border-b border-[var(--color-arena-border)] flex items-center px-6 shrink-0">
-          <h1 className="text-sm font-medium text-[var(--color-arena-muted)]">
+        <header className="h-14 bg-white border-b border-arena-border flex items-center px-6 shrink-0">
+          <h1 className="text-sm font-medium text-arena-muted">
             AI Trading League — NIFTY 100
           </h1>
         </header>
