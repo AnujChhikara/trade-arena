@@ -4,7 +4,7 @@ import { db } from '../db/index.js';
 import { marketSnapshots } from '../db/schema/market.js';
 import { getSnapshotById, getLatestSnapshot } from '../services/snapshot-builder.js';
 
-const router = Router();
+const router: Router = Router();
 
 router.get('/latest', async (_req: Request, res: Response) => {
   try {

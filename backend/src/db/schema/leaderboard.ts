@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, numeric, integer, unique } from 'drizzle-orm/pg-core';
-import { agents } from './agents';
+import { agents } from './agents.js';
 
 export const leaderboardDaily = pgTable('leaderboard_daily', {
   id: uuid('id').defaultRandom().primaryKey(),

@@ -1,6 +1,6 @@
 import { pgTable, uuid, text, timestamp, jsonb, numeric, integer } from 'drizzle-orm/pg-core';
-import { agents } from './agents';
-import { marketSnapshots } from './market';
+import { agents } from './agents.js';
+import { marketSnapshots } from './market.js';
 
 export const agentDecisions = pgTable('agent_decisions', {
   id: uuid('id').defaultRandom().primaryKey(),

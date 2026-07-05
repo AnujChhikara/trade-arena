@@ -95,7 +95,7 @@ export async function checkRiskRules(): Promise<number> {
 
     const [agent] = await db.select({ capital: agents.capital }).from(agents).where(eq(agents.id, p.agentId));
     if (agent) {
-      await db.update(agents).set({ capital: String(parseFloat(agent.capital) + pnl) }).where(eq(agents.id, p.agentId));
+      await db.update(agents).set({ capital: String(parseFloat(agent.capital ?? '1000000') + pnl) }).where(eq(agents.id, p.agentId));
     }
   }
 

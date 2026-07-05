@@ -96,7 +96,7 @@ wss.on('connection', (ws: WebSocket) => {
   console.log('[WS] Connected');
   const sub = redis.duplicate();
   sub.subscribe('checkpoint:done');
-  sub.on('message', (ch, msg) => { if (ws.readyState === WebSocket.OPEN) ws.send(msg); });
+  sub.on('message', (ch: string, msg: string) => { if (ws.readyState === WebSocket.OPEN) ws.send(msg); });
   ws.on('close', () => { sub.unsubscribe(); sub.quit(); });
   ws.send(JSON.stringify({ channel: 'connected', timestamp: new Date().toISOString() }));
 });

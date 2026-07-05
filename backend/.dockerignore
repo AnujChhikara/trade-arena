@@ -1,0 +1,11 @@
+.git
+.github
+.gitignore
+.env
+.env.*
+*.md
+node_modules
+scripts
+k8s
+Makefile
+docker-compose.yml

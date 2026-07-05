@@ -7,7 +7,7 @@ import { eq, asc } from 'drizzle-orm';
 import { config } from '../config/index.js';
 import redis from '../config/redis.js';
 
-const router = Router();
+const router: Router = Router();
 
 router.get('/', async (_req: Request, res: Response) => {
   try {
@@ -64,7 +64,7 @@ router.get('/daily', async (_req: Request, res: Response) => {
 
 router.get('/history', async (_req: Request, res: Response) => {
   try {
-    const rows = await db.select().from(leaderboardWeekly).orderBy(leaderboardWeekly.week).orderBy(leaderboardWeekly.rank);
+    const rows = await db.select().from(leaderboardWeekly).orderBy(leaderboardWeekly.week, leaderboardWeekly.rank);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

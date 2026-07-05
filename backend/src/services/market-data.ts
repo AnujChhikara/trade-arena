@@ -1,4 +1,4 @@
-import YahooFinance from 'yahoo-finance2';
+import yahooFinance from 'yahoo-finance2';
 
 import redis from '../config/redis.js';
 import { config } from '../config/index.js';
@@ -20,7 +20,7 @@ export interface QuoteData {
   fetched_at: string;
 }
 
-const yf = YahooFinance;
+const yf = yahooFinance;
 
 export async function fetchAllQuotes(): Promise<QuoteData[]> {
   const results: QuoteData[] = [];
@@ -56,7 +56,9 @@ export async function fetchAllQuotes(): Promise<QuoteData[]> {
   return results;
 }
 
-function mapQuoteResponse(symbol: string, quote: YahooFinance.QuoteResponse): QuoteData {
+type Quote = Awaited<ReturnType<typeof yf.quote>>[number];
+
+function mapQuoteResponse(symbol: string, quote: Quote): QuoteData {
   const ltp = quote.regularMarketPrice ?? null;
   const prevClose = quote.regularMarketPreviousClose ?? null;
   const change = ltp != null && prevClose != null ? ltp - prevClose : null;

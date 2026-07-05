@@ -77,10 +77,11 @@ async function executeOrder(order: typeof orders.$inferSelect) {
       const pnl = q * (exPrice - parseFloat(pos.entryPrice));
       totalPnl += pnl;
       const rem = pos.quantity - q;
+      const curPnl = parseFloat(pos.realizedPnl ?? '0');
       if (rem <= 0) {
-        await db.update(positions).set({ quantity: 0, status: 'closed', closedAt: new Date(), realizedPnl: String(parseFloat(pos.realizedPnl) + pnl), currentPrice: String(exPrice) }).where(eq(positions.id, pos.id));
+        await db.update(positions).set({ quantity: 0, status: 'closed', closedAt: new Date(), realizedPnl: String(curPnl + pnl), currentPrice: String(exPrice) }).where(eq(positions.id, pos.id));
       } else {
-        await db.update(positions).set({ quantity: rem, realizedPnl: String(parseFloat(pos.realizedPnl) + pnl), currentPrice: String(exPrice) }).where(eq(positions.id, pos.id));
+        await db.update(positions).set({ quantity: rem, realizedPnl: String(curPnl + pnl), currentPrice: String(exPrice) }).where(eq(positions.id, pos.id));
       }
       sellQty -= q;
       if (sellQty <= 0) break;
@@ -92,7 +93,7 @@ async function executeOrder(order: typeof orders.$inferSelect) {
 
     if (totalPnl !== 0) {
       const [agent] = await db.select({ capital: agents.capital }).from(agents).where(eq(agents.id, order.agentId!));
-      await db.update(agents).set({ capital: String(parseFloat(agent.capital) + totalPnl) }).where(eq(agents.id, order.agentId!));
+      await db.update(agents).set({ capital: String(parseFloat(agent.capital ?? '1000000') + totalPnl) }).where(eq(agents.id, order.agentId!));
     }
   }
 }

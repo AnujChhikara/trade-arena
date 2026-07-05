@@ -11,7 +11,7 @@ const QuerySchema = z.object({
   limit: z.coerce.number().min(1).max(200).optional(),
 });
 
-const router = Router();
+const router: Router = Router();
 
 router.get('/', async (req: Request, res: Response) => {
   const query = QuerySchema.safeParse(req.query);

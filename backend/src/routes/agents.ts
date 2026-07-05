@@ -5,7 +5,7 @@ import { positions } from '../db/schema/positions.js';
 import { agentDecisions } from '../db/schema/decisions.js';
 import { eq, and, desc } from 'drizzle-orm';
 
-const router = Router();
+const router: Router = Router();
 
 router.get('/', async (_req: Request, res: Response) => {
   try {

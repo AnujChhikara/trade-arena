@@ -24,6 +24,8 @@ async function writeDailyForAgent(agentId: string) {
   const [agent] = await db.select().from(agents).where(eq(agents.id, agentId));
   if (!agent) return;
 
+  const agentCapital = parseFloat(agent.capital ?? '1000000');
+
   const openPos = await db.select({
     entryPrice: positions.entryPrice,
     currentPrice: positions.currentPrice,
@@ -32,7 +34,7 @@ async function writeDailyForAgent(agentId: string) {
     .where(and(eq(positions.agentId, agentId), eq(positions.status, 'open')));
 
   const stockValue = openPos.reduce((s, p) => s + p.quantity * parseFloat(p.currentPrice || p.entryPrice), 0);
-  const totalValue = parseFloat(agent.capital) + stockValue;
+  const totalValue = agentCapital + stockValue;
 
   const todayOrders = await db.select({ side: orders.side, amount: orders.amount, status: orders.status })
     .from(orders)
@@ -49,7 +51,7 @@ async function writeDailyForAgent(agentId: string) {
   const winningTrades = closedToday.filter(p => parseFloat(p.realizedPnl || '0') > 0).length;
   const totalClosed = closedToday.length;
 
-  const capital = parseFloat(agent.capital);
+  const capital = agentCapital;
   const returnPct = ((totalValue - config.initialCapital) / config.initialCapital) * 100;
   const turnoverPct = capital > 0 ? (totalBuy / capital) * 100 : 0;
   const hitRate = totalClosed > 0 ? (winningTrades / totalClosed) * 100 : 0;
@@ -117,7 +119,7 @@ export async function settleWeekly() {
       .orderBy(leaderboardDaily.date);
 
     const startingCapital = daily.length > 0 ? parseFloat(daily[0].capital || `${config.initialCapital}`) : config.initialCapital;
-    const endingCapital = parseFloat(a.capital);
+    const endingCapital = parseFloat(a.capital ?? `${config.initialCapital}`);
     const peakCapital = daily.reduce((p, d) => Math.max(p, parseFloat(d.capital || '0')), startingCapital);
     const maxDrawdownPct = daily.reduce((p, d) => Math.max(p, parseFloat(d.drawdownPct || '0')), 0);
     const returnPct = ((endingCapital - startingCapital) / startingCapital) * 100;
