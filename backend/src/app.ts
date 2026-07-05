@@ -11,6 +11,7 @@ import { marketSnapshots } from './db/schema/market.js';
 import { agentDecisions } from './db/schema/decisions.js';
 import redis from './config/redis.js';
 import { cacheMiddleware } from './lib/cache.js';
+import { startScheduler } from './lib/scheduler.js';
 
 import agentsRouter from './routes/agents.js';
 import leaderboardRouter from './routes/leaderboard.js';
@@ -102,6 +103,7 @@ wss.on('connection', (ws: WebSocket) => {
 server.listen(config.port, () => {
   console.log(`[App] Trade Arena running on :${config.port}`);
   console.log(`[App] OpenRouter: ${config.openRouter.apiKey ? 'configured' : 'MOCK MODE'}`);
+  startScheduler();
 });
 
 process.on('SIGTERM', () => { server.close(); redis.quit(); process.exit(0); });
