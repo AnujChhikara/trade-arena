@@ -1,30 +1,39 @@
+import { log } from './logger.js';
+
 const CHECKPOINT_INTERVAL = 15 * 60 * 1000;
 
+function toIST(d: Date): Date {
+  return new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+}
+
 function isMarketOpen(): boolean {
-  const now = new Date();
-  const day = now.getDay();
-  const ist = now.getHours() * 100 + now.getMinutes();
-  return day >= 1 && day <= 5 && ist >= 915 && ist <= 1530;
+  const ist = toIST(new Date());
+  const day = ist.getUTCDay();
+  const t = ist.getUTCHours() * 100 + ist.getUTCMinutes();
+  return day >= 1 && day <= 5 && t >= 915 && t <= 1530;
 }
 
 function isFridayLiquidation(): boolean {
-  const now = new Date();
-  const ist = now.getHours() * 100 + now.getMinutes();
-  return now.getDay() === 5 && ist >= 1530 && ist < 1545;
+  const ist = toIST(new Date());
+  const t = ist.getUTCHours() * 100 + ist.getUTCMinutes();
+  return ist.getUTCDay() === 5 && t >= 1530 && t < 1545;
 }
 
 export function startScheduler() {
-  console.log('[Scheduler] Auto-scheduler started (every 15 min during market hours)');
+  log('info', 'scheduler_started', { interval_ms: CHECKPOINT_INTERVAL });
 
   const tick = async () => {
-    if (!isMarketOpen()) return;
+    if (!isMarketOpen()) {
+      log('info', 'scheduler_skip', { reason: 'market_closed' });
+      return;
+    }
 
     try {
       const { runCheckpoint } = await import('../services/agent-scheduler.js');
       const { processPendingOrders } = await import('../services/execution-service.js');
       const { checkRiskRules } = await import('../services/risk-service.js');
 
-      console.log('[Scheduler] Tick — starting checkpoint cycle');
+      log('info', 'tick_start');
       await runCheckpoint();
       const filled = await processPendingOrders();
       const closed = await checkRiskRules();
@@ -36,9 +45,9 @@ export function startScheduler() {
         await settleWeekly();
       }
 
-      console.log(`[Scheduler] Tick done — ${filled} orders filled, ${closed} positions closed`);
+      log('info', 'tick_done', { orders_filled: filled, positions_closed: closed });
     } catch (err) {
-      console.error('[Scheduler] Tick error:', (err as Error).message);
+      log('error', 'tick_error', { message: (err as Error).message });
     }
   };
 

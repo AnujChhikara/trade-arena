@@ -56,10 +56,11 @@ app.use('/api/decisions', cacheMiddleware(900_000), decisionsRouter);
 app.get('/api/league/status', cacheMiddleware(300_000), async (_req, res) => {
   try {
     const now = new Date();
-    const day = now.getDay();
-    const ist = now.getHours() * 100 + now.getMinutes();
-    const isOpen = day >= 1 && day <= 5 && ist >= 915 && ist <= 1530;
-    const nextCp = config.checkpoints.find(t => { const [h, m] = t.split(':').map(Number); return (h * 100 + m) > ist; }) || config.checkpoints[0];
+    const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    const day = ist.getUTCDay();
+    const istTime = ist.getUTCHours() * 100 + ist.getUTCMinutes();
+    const isOpen = day >= 1 && day <= 5 && istTime >= 915 && istTime <= 1530;
+    const nextCp = config.checkpoints.find(t => { const [h, m] = t.split(':').map(Number); return (h * 100 + m) > istTime; }) || config.checkpoints[0];
 
     const [snapCount] = await db.select({ count: sql<number>`count(*)` }).from(marketSnapshots);
     const [decCount] = await db.select({ count: sql<number>`count(*)` }).from(agentDecisions);
