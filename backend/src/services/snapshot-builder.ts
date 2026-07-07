@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { marketSnapshots } from '../db/schema/market.js';
 import redis from '../config/redis.js';
@@ -158,7 +158,7 @@ export async function getLatestSnapshot() {
     if (cached) return { id, ...JSON.parse(cached) };
   }
 
-  const [row] = await db.select().from(marketSnapshots).orderBy(marketSnapshots.capturedAt).limit(1);
+  const [row] = await db.select().from(marketSnapshots).orderBy(desc(marketSnapshots.capturedAt)).limit(1);
   if (!row) return null;
   return formatRow(row);
 }

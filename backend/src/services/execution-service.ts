@@ -5,12 +5,13 @@ import { positions } from '../db/schema/positions.js';
 import { agents } from '../db/schema/agents.js';
 import { config } from '../config/index.js';
 import redis from '../config/redis.js';
+import { log } from '../lib/logger.js';
 
 export async function processPendingOrders(): Promise<number> {
   const pending = await db.select().from(orders)
     .where(eq(orders.status, 'pending'))
     .orderBy(orders.createdAt)
-    .limit(20);
+    .limit(100);
 
   for (const order of pending) {
     await executeOrder(order);
@@ -59,7 +60,7 @@ async function executeOrder(order: typeof orders.$inferSelect) {
       entryPrice: String(exPrice), currentPrice: String(quote.ltp),
       strategyType: 'INTRADAY', status: 'open',
     });
-    console.log(`[Exec] BUY ${order.symbol} ${qty}@${exPrice}`);
+    log('info', 'order_filled', { side: 'BUY', symbol: order.symbol, qty, price: exPrice });
   } else {
     const opens = await db.select().from(positions)
       .where(and(eq(positions.agentId, order.agentId!), eq(positions.symbol, order.symbol), eq(positions.status, 'open')))
@@ -89,7 +90,7 @@ async function executeOrder(order: typeof orders.$inferSelect) {
 
     const filled = qty - sellQty;
     await db.update(orders).set({ executedPrice: String(exPrice), quantity: filled, status: filled > 0 ? 'filled' : 'rejected', executedAt: new Date() }).where(eq(orders.id, order.id));
-    console.log(`[Exec] SELL ${order.symbol} ${filled}@${exPrice} PnL:₹${totalPnl}`);
+    log('info', 'order_filled', { side: 'SELL', symbol: order.symbol, qty: filled, price: exPrice, pnl: totalPnl });
 
     if (totalPnl !== 0) {
       const [agent] = await db.select({ capital: agents.capital }).from(agents).where(eq(agents.id, order.agentId!));
