@@ -44,13 +44,13 @@ export default function Replay() {
   const losers = selected?.movers?.top_losers || []
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div>
-        <h2 className="text-lg font-display font-bold text-arena-text">Market Replay</h2>
-        <p className="text-xs text-arena-muted mt-0.5 tracking-wide">Browse checkpoint snapshots — view market state at any point in time</p>
+        <h1 className="text-2xl font-display font-bold text-arena-text tracking-tight">Market Replay</h1>
+        <p className="text-sm text-arena-muted mt-1">Browse checkpoint snapshots — view market state at any point in time</p>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex gap-5">
         {/* Snapshot timeline sidebar */}
         <div className="w-64 shrink-0">
           <div className="bg-arena-surface border border-arena-border rounded-xl overflow-hidden">

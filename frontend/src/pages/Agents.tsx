@@ -37,15 +37,13 @@ export default function AgentsList() {
   })
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-display font-bold text-arena-text">Agents</h2>
-          <p className="text-xs text-arena-muted mt-0.5 tracking-wide">{agents.length} active competitors · NIFTY 100</p>
-        </div>
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <div>
+        <h1 className="text-2xl font-display font-bold text-arena-text tracking-tight">Agents</h1>
+        <p className="text-sm text-arena-muted mt-1">{agents.length} active competitors · NIFTY 100</p>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {sortedAgents.map((agent, i) => {
           const lb = rankMap[agent.id]
           const returnPct = lb?.return_pct ?? 0
@@ -57,7 +55,7 @@ export default function AgentsList() {
             <div
               key={agent.id}
               onClick={() => nav(`/agents/${agent.id}`)}
-              className="bg-arena-surface border border-arena-border rounded-xl p-5 cursor-pointer hover:border-arena-border-bright hover:bg-arena-surface-2 transition-all group"
+              className="bg-arena-surface border border-arena-border rounded-2xl p-5 cursor-pointer hover:border-arena-border-bright hover:bg-arena-surface-2 transition-all group"
               style={isLeader ? { borderColor: `${color}40` } : undefined}
             >
               <div className="flex items-center gap-4">

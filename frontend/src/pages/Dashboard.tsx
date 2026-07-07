@@ -7,7 +7,7 @@ import DataTable from '../components/DataTable'
 import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart,
 } from 'recharts'
-import { TrendingUp, Clock, Users } from 'lucide-react'
+import { TrendingUp, Clock, Users, Swords } from 'lucide-react'
 
 export const AGENT_COLORS = ['#38BDF8', '#A78BFA', '#34D399', '#F97316', '#FB7185', '#FBBF24']
 
@@ -55,142 +55,36 @@ export default function Dashboard() {
     : 0
   const maxValue = leaderboard.length > 0 ? Math.max(...leaderboard.map(a => a.total_value)) : 1
   const isOpen = status?.status === 'active'
+  const sparseChart = chartData.length <= 2
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
 
-      {/* Battle standings — signature element */}
-      <div className="bg-arena-surface border border-arena-border rounded-xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-arena-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-semibold text-arena-muted uppercase tracking-widest">Battle Standings</span>
-            <span className="text-[10px] font-mono-data text-arena-muted">— live competition</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {isOpen ? (
-              <div className="flex items-center gap-1.5 text-arena-success">
-                <div className="w-1.5 h-1.5 rounded-full bg-arena-success animate-pulse" />
-                <span className="text-[10px] font-medium uppercase tracking-wider">Market Open</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5 text-arena-muted">
-                <div className="w-1.5 h-1.5 rounded-full bg-arena-muted" />
-                <span className="text-[10px] font-medium uppercase tracking-wider">Market Closed</span>
-              </div>
-            )}
-            <span className="text-arena-border mx-1">·</span>
-            <span className="text-[10px] font-mono-data text-arena-muted">Next {status?.next_checkpoint || '--'}</span>
-          </div>
+      {/* Page heading */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-display font-bold text-arena-text tracking-tight">Dashboard</h1>
+          <p className="text-sm text-arena-muted mt-1">Live standings across all competing agents</p>
         </div>
-
-        <div className="p-5 space-y-3">
-          {leaderboard.length === 0 ? (
-            <div className="text-center text-sm text-arena-muted py-4">No agents seeded yet</div>
-          ) : leaderboard.map((agent, i) => {
-            const color = AGENT_COLORS[i % AGENT_COLORS.length]
-            const barWidth = maxValue > 0 ? (agent.total_value / maxValue) * 100 : 0
-            const isLeader = i === 0
-            return (
-              <div
-                key={agent.id}
-                onClick={() => nav(`/agents/${agent.id}`)}
-                className="grid items-center gap-4 cursor-pointer group"
-                style={{ gridTemplateColumns: '1.5rem 7rem 1fr 5.5rem 4.5rem' }}
-              >
-                {/* Rank */}
-                <span className={`text-xs font-bold font-mono-data text-center ${isLeader ? 'text-arena-gold' : 'text-arena-muted'}`}>
-                  #{agent.rank}
-                </span>
-
-                {/* Name */}
-                <div>
-                  <div className="text-xs font-semibold text-arena-text group-hover:text-arena-primary transition-colors truncate" style={{ color: isLeader ? color : undefined }}>
-                    {agent.name}
-                  </div>
-                  <div className="text-[10px] text-arena-muted truncate">{agent.persona || 'balanced'}</div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="h-2 rounded-full bg-arena-border overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${barWidth}%`,
-                      backgroundColor: color,
-                      boxShadow: isLeader ? `0 0 8px ${color}60` : undefined,
-                    }}
-                  />
-                </div>
-
-                {/* Portfolio value */}
-                <div className="text-right">
-                  <span className="text-xs font-mono-data font-semibold text-arena-text tabular-nums">
-                    {compact(agent.total_value)}
-                  </span>
-                </div>
-
-                {/* Return */}
-                <div className="text-right">
-                  <span className={`text-xs font-mono-data font-bold tabular-nums ${agent.return_pct > 0 ? 'text-arena-success' : agent.return_pct < 0 ? 'text-arena-danger' : 'text-arena-muted'}`}>
-                    {pct(agent.return_pct)}
-                  </span>
-                </div>
-              </div>
-            )
-          })}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-arena-border bg-arena-surface">
+          {isOpen ? (
+            <>
+              <div className="w-1.5 h-1.5 rounded-full bg-arena-success animate-pulse" />
+              <span className="text-[11px] font-medium text-arena-success uppercase tracking-wider">Market Open</span>
+            </>
+          ) : (
+            <>
+              <div className="w-1.5 h-1.5 rounded-full bg-arena-muted" />
+              <span className="text-[11px] font-medium text-arena-muted uppercase tracking-wider">Market Closed</span>
+            </>
+          )}
+          <span className="text-arena-border">·</span>
+          <span className="text-[11px] font-mono-data text-arena-muted">Next {status?.next_checkpoint || '--'}</span>
         </div>
       </div>
 
-      {/* Chart */}
-      {chartData.length > 0 && (
-        <div className="bg-arena-surface border border-arena-border rounded-xl overflow-hidden">
-          <div className="px-5 py-3 border-b border-arena-border">
-            <span className="text-[10px] font-semibold text-arena-muted uppercase tracking-widest">Portfolio Value Over Time</span>
-          </div>
-          <div className="p-5">
-            <ResponsiveContainer width="100%" height={260}>
-              <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
-                <defs>
-                  {agentNames.map((name, i) => (
-                    <linearGradient key={name} id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={AGENT_COLORS[i % AGENT_COLORS.length]} stopOpacity={0.25} />
-                      <stop offset="95%" stopColor={AGENT_COLORS[i % AGENT_COLORS.length]} stopOpacity={0} />
-                    </linearGradient>
-                  ))}
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1B2E45" vertical={false} />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748B', fontFamily: 'var(--font-mono)' }} stroke="#1B2E45" axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: '#64748B', fontFamily: 'var(--font-mono)' }} stroke="none" tickLine={false} axisLine={false} tickFormatter={(v: number) => compact(v)} width={48} />
-                <Tooltip
-                  contentStyle={{ background: '#0D1526', border: '1px solid #1B2E45', borderRadius: 8, fontSize: 11, color: '#E2E8F0' }}
-                  formatter={(v: any) => [rupees(Number(v) || 0), '']}
-                  labelStyle={{ color: '#64748B', fontSize: 10, marginBottom: 4 }}
-                />
-                <Legend
-                  iconType="circle"
-                  iconSize={6}
-                  wrapperStyle={{ fontSize: 11, paddingTop: 12, color: '#94A3B8' }}
-                />
-                {agentNames.map((name, i) => (
-                  <Area
-                    key={name}
-                    type="monotone"
-                    dataKey={name}
-                    stroke={AGENT_COLORS[i % AGENT_COLORS.length]}
-                    strokeWidth={2}
-                    fill={`url(#grad-${i})`}
-                    dot={false}
-                    connectNulls
-                  />
-                ))}
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      )}
-
       {/* Quick stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard label="Total Portfolio" value={compact(totalValue)} icon={TrendingUp} />
         <StatCard
           label="Avg Return"
@@ -203,11 +97,131 @@ export default function Dashboard() {
         <StatCard label="Next Check" value={status?.next_checkpoint || '--'} icon={Clock} />
       </div>
 
+      {/* Battle standings — signature element */}
+      <div className="bg-arena-surface border border-arena-border rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-arena-border flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <Swords size={15} className="text-arena-primary" />
+            <span className="text-xs font-semibold text-arena-text uppercase tracking-widest">Battle Standings</span>
+          </div>
+          <span className="text-[11px] font-mono-data text-arena-muted">live competition</span>
+        </div>
+
+        <div className="p-3 sm:p-4">
+          {leaderboard.length === 0 ? (
+            <div className="text-center text-sm text-arena-muted py-8">No agents seeded yet</div>
+          ) : leaderboard.map((agent, i) => {
+            const color = AGENT_COLORS[i % AGENT_COLORS.length]
+            const barWidth = maxValue > 0 ? (agent.total_value / maxValue) * 100 : 0
+            const isLeader = i === 0
+            return (
+              <div
+                key={agent.id}
+                onClick={() => nav(`/agents/${agent.id}`)}
+                className="grid items-center gap-4 cursor-pointer group px-3 py-3.5 rounded-xl hover:bg-arena-surface-2 transition-colors"
+                style={{ gridTemplateColumns: '2rem 9rem 1fr 6rem 5rem' }}
+              >
+                {/* Rank */}
+                <span className={`text-sm font-bold font-mono-data text-center ${isLeader ? 'text-arena-gold' : 'text-arena-muted'}`}>
+                  #{agent.rank}
+                </span>
+
+                {/* Name */}
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-arena-text group-hover:text-arena-primary transition-colors truncate" style={{ color: isLeader ? color : undefined }}>
+                    {agent.name}
+                  </div>
+                  <div className="text-[11px] text-arena-muted truncate">{agent.persona || 'balanced'}</div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="h-2.5 rounded-full bg-arena-border/60 overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${barWidth}%`,
+                      backgroundColor: color,
+                      boxShadow: isLeader ? `0 0 10px ${color}70` : undefined,
+                    }}
+                  />
+                </div>
+
+                {/* Portfolio value */}
+                <div className="text-right">
+                  <span className="text-sm font-mono-data font-semibold text-arena-text tabular-nums">
+                    {compact(agent.total_value)}
+                  </span>
+                </div>
+
+                {/* Return */}
+                <div className="text-right">
+                  <span className={`text-sm font-mono-data font-bold tabular-nums ${agent.return_pct > 0 ? 'text-arena-success' : agent.return_pct < 0 ? 'text-arena-danger' : 'text-arena-muted'}`}>
+                    {pct(agent.return_pct)}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Chart */}
+      {chartData.length > 0 && (
+        <div className="bg-arena-surface border border-arena-border rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b border-arena-border flex items-center justify-between">
+            <span className="text-xs font-semibold text-arena-text uppercase tracking-widest">Portfolio Value Over Time</span>
+            {sparseChart && (
+              <span className="text-[11px] text-arena-muted font-mono-data">collecting daily data…</span>
+            )}
+          </div>
+          <div className="px-4 py-5 sm:px-6">
+            <ResponsiveContainer width="100%" height={230}>
+              <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                <defs>
+                  {agentNames.map((name, i) => (
+                    <linearGradient key={name} id={`grad-${i}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={AGENT_COLORS[i % AGENT_COLORS.length]} stopOpacity={0.22} />
+                      <stop offset="95%" stopColor={AGENT_COLORS[i % AGENT_COLORS.length]} stopOpacity={0} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1B2E45" vertical={false} />
+                <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#64748B', fontFamily: 'var(--font-mono)' }} stroke="#1B2E45" axisLine={false} tickLine={false} padding={{ left: 16, right: 16 }} />
+                <YAxis tick={{ fontSize: 10, fill: '#64748B', fontFamily: 'var(--font-mono)' }} stroke="none" tickLine={false} axisLine={false} tickFormatter={(v: number) => compact(v)} width={48} domain={['dataMin - 5000', 'dataMax + 5000']} />
+                <Tooltip
+                  contentStyle={{ background: '#0D1526', border: '1px solid #1B2E45', borderRadius: 8, fontSize: 11, color: '#E2E8F0' }}
+                  formatter={(v: any) => [rupees(Number(v) || 0), '']}
+                  labelStyle={{ color: '#64748B', fontSize: 10, marginBottom: 4 }}
+                />
+                <Legend
+                  iconType="circle"
+                  iconSize={7}
+                  wrapperStyle={{ fontSize: 11, paddingTop: 16, color: '#94A3B8' }}
+                />
+                {agentNames.map((name, i) => (
+                  <Area
+                    key={name}
+                    type="monotone"
+                    dataKey={name}
+                    stroke={AGENT_COLORS[i % AGENT_COLORS.length]}
+                    strokeWidth={2}
+                    fill={`url(#grad-${i})`}
+                    dot={sparseChart ? { r: 3, strokeWidth: 0, fill: AGENT_COLORS[i % AGENT_COLORS.length] } : false}
+                    activeDot={{ r: 4, strokeWidth: 0 }}
+                    connectNulls
+                  />
+                ))}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       {/* Full leaderboard table */}
-      <div className="bg-arena-surface border border-arena-border rounded-xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-arena-border flex items-center justify-between">
-          <span className="text-[10px] font-semibold text-arena-muted uppercase tracking-widest">Full Leaderboard</span>
-          <span className="text-[10px] text-arena-muted font-mono-data">{leaderboard.length} agents</span>
+      <div className="bg-arena-surface border border-arena-border rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-arena-border flex items-center justify-between">
+          <span className="text-xs font-semibold text-arena-text uppercase tracking-widest">Full Leaderboard</span>
+          <span className="text-[11px] text-arena-muted font-mono-data">{leaderboard.length} agents</span>
         </div>
         <DataTable
           columns={[

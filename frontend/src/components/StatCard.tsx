@@ -11,7 +11,7 @@ interface StatCardProps {
 
 export default function StatCard({ label, value, icon: Icon, trend, accent, className = '' }: StatCardProps) {
   return (
-    <div className={`bg-arena-surface border border-arena-border rounded-xl p-5 ${className}`}>
+    <div className={`bg-arena-surface border border-arena-border rounded-2xl p-6 hover:border-arena-border-bright transition-colors ${className}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="text-[10px] font-medium text-arena-muted uppercase tracking-widest mb-2">{label}</div>

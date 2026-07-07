@@ -97,7 +97,7 @@ export default function AgentDetail() {
   ]
 
   return (
-    <div className="space-y-4 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto">
       <Link to="/agents" className="inline-flex items-center gap-1.5 text-xs text-arena-muted hover:text-arena-text transition-colors font-medium uppercase tracking-wider">
         <ArrowLeft size={14} />
         Agents
