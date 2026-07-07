@@ -25,7 +25,26 @@ export interface Position {
 }
 
 export interface DecisionSummary {
-  id: string; created_at: string; status: string
+  id: string
+  created_at: string
+  status: string
+  decision: string | null
+  hypothesis: string | null
+  cost: string | null
+  response_time_ms: number | null
+}
+
+export interface AgentOrder {
+  id: string
+  symbol: string
+  side: 'BUY' | 'SELL'
+  quantity: number | null
+  amount: string | null
+  executed_price: string | null
+  status: string
+  rejection_reason: string | null
+  created_at: string
+  executed_at: string | null
 }
 
 export interface LeaderboardEntry {
@@ -55,6 +74,7 @@ export const api = {
   agents: {
     list: () => get<Agent[]>('/agents'),
     get: (id: string) => get<AgentDetail>(`/agents/${id}`),
+    orders: (id: string) => get<AgentOrder[]>(`/agents/${id}/orders`),
   },
   leaderboard: {
     current: () => get<LeaderboardEntry[]>('/leaderboard'),
