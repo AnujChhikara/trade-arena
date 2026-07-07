@@ -1,19 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-arena-bg: #f1f5f9;
-  --color-arena-surface: #ffffff;
-  --color-arena-border: #e2e8f0;
-  --color-arena-muted: #64748b;
-  --color-arena-text: #0f172a;
-  --color-arena-primary: #2563eb;
-  --color-arena-primary-light: #eff6ff;
-  --color-arena-success: #16a34a;
-  --color-arena-success-light: #dcfce7;
-  --color-arena-danger: #dc2626;
-  --color-arena-danger-light: #fee2e2;
-  --color-arena-warning: #d97706;
-  --color-arena-warning-light: #fef3c7;
+  /* Dark terminal palette */
+  --color-arena-bg: #070B14;
+  --color-arena-surface: #0D1526;
+  --color-arena-surface-2: #111D30;
+  --color-arena-border: #1B2E45;
+  --color-arena-border-bright: #2A4060;
+  --color-arena-muted: #64748B;
+  --color-arena-text: #E2E8F0;
+  --color-arena-text-dim: #94A3B8;
+
+  /* Accents */
+  --color-arena-primary: #38BDF8;
+  --color-arena-primary-light: #0C2340;
+  --color-arena-success: #22C55E;
+  --color-arena-success-light: #052E16;
+  --color-arena-danger: #EF4444;
+  --color-arena-danger-light: #2D0808;
+  --color-arena-warning: #F59E0B;
+  --color-arena-warning-light: #2D1A00;
+  --color-arena-gold: #F59E0B;
+
+  /* Fonts */
+  --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
@@ -22,7 +32,40 @@
   body {
     background-color: var(--color-arena-bg);
     color: var(--color-arena-text);
-    -webkit-font-smoothing: antialiased;
     font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    color-scheme: dark;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-arena-border) transparent;
+  }
+
+  *::-webkit-scrollbar { width: 4px; height: 4px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb { background: var(--color-arena-border); border-radius: 2px; }
+}
+
+@layer utilities {
+  .font-display { font-family: var(--font-display); }
+  .font-mono-data { font-family: var(--font-mono); }
+
+  .glow-primary { box-shadow: 0 0 24px rgba(56, 189, 248, 0.18); }
+  .glow-success { box-shadow: 0 0 24px rgba(34, 197, 94, 0.18); }
+  .text-glow { text-shadow: 0 0 16px currentColor; }
+
+  .card {
+    background-color: var(--color-arena-surface);
+    border: 1px solid var(--color-arena-border);
+    border-radius: 0.75rem;
+  }
+
+  .card-header {
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid var(--color-arena-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 }

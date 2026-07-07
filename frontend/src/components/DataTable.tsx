@@ -27,7 +27,7 @@ export default function DataTable<T extends Record<string, any>>({
             {columns.map(col => (
               <th
                 key={col.key}
-                className={`px-4 py-3 text-xs font-semibold text-arena-muted uppercase tracking-wider ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'} ${col.hideOnMobile ? 'hidden md:table-cell' : ''} ${col.className || ''}`}
+                className={`px-4 py-3 text-[10px] font-semibold text-arena-muted uppercase tracking-widest ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'} ${col.hideOnMobile ? 'hidden md:table-cell' : ''} ${col.className || ''}`}
               >
                 {col.label}
               </th>
@@ -39,7 +39,7 @@ export default function DataTable<T extends Record<string, any>>({
             <tr
               key={row.id || i}
               onClick={() => onRowClick?.(row)}
-              className={`border-b border-arena-border/50 transition-colors ${onRowClick ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+              className={`border-b border-arena-border/40 transition-colors ${onRowClick ? 'cursor-pointer hover:bg-arena-surface-2' : ''}`}
             >
               {columns.map(col => (
                 <td
