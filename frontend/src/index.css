@@ -1,71 +1,145 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-@theme {
-  /* Dark terminal palette */
-  --color-arena-bg: #070B14;
-  --color-arena-surface: #0D1526;
-  --color-arena-surface-2: #111D30;
-  --color-arena-border: #1B2E45;
-  --color-arena-border-bright: #2A4060;
-  --color-arena-muted: #64748B;
-  --color-arena-text: #E2E8F0;
-  --color-arena-text-dim: #94A3B8;
+@custom-variant dark (&:is(.dark *));
 
-  /* Accents */
-  --color-arena-primary: #38BDF8;
-  --color-arena-primary-light: #0C2340;
-  --color-arena-success: #22C55E;
-  --color-arena-success-light: #052E16;
-  --color-arena-danger: #EF4444;
-  --color-arena-danger-light: #2D0808;
-  --color-arena-warning: #F59E0B;
-  --color-arena-warning-light: #2D1A00;
-  --color-arena-gold: #F59E0B;
+/* ============================================================
+   Trade Arena — design tokens (dark trading terminal)
+   Semantic layer -> mapped to Tailwind utilities via @theme inline
+   ============================================================ */
+:root {
+  --radius: 0.75rem;
 
-  /* Fonts */
+  /* Base surfaces — deliberate elevation steps */
+  --background: #06090F;
+  --foreground: #E7EBF3;
+
+  --card: #10151F;
+  --card-foreground: #E7EBF3;
+
+  --popover: #141B26;
+  --popover-foreground: #E7EBF3;
+
+  /* Brand */
+  --primary: #38BDF8;
+  --primary-foreground: #04121C;
+
+  --secondary: #19212E;
+  --secondary-foreground: #E7EBF3;
+
+  --muted: #161D28;
+  --muted-foreground: #8A94A7;
+
+  --accent: #172033;
+  --accent-foreground: #7DD3FC;
+
+  --destructive: #F0524B;
+  --destructive-foreground: #FEECEC;
+
+  --border: #212B3B;
+  --input: #212B3B;
+  --ring: #38BDF8;
+
+  /* Semantic finance */
+  --up: #22C55E;
+  --up-soft: #0B2A18;
+  --down: #F0524B;
+  --down-soft: #2A1010;
+  --gold: #F5B841;
+  --warning: #F59E0B;
+  --warning-soft: #2A1E08;
+
+  /* Agent identity palette */
+  --agent-1: #38BDF8;
+  --agent-2: #A78BFA;
+  --agent-3: #34D399;
+  --agent-4: #FB923C;
+  --agent-5: #FB7185;
+  --agent-6: #FBBF24;
+
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-mono: "JetBrains Mono", "Fira Code", ui-monospace, monospace;
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-up: var(--up);
+  --color-up-soft: var(--up-soft);
+  --color-down: var(--down);
+  --color-down-soft: var(--down-soft);
+  --color-gold: var(--gold);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
 }
 
 @layer base {
+  * {
+    border-color: var(--border);
+  }
+
   body {
-    background-color: var(--color-arena-bg);
-    color: var(--color-arena-text);
+    background-color: var(--background);
+    color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
     color-scheme: dark;
+  }
+
+  /* Ambient radial glow behind content for depth */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(60rem 40rem at 78% -10%, rgba(56, 189, 248, 0.06), transparent 60%),
+      radial-gradient(50rem 40rem at 0% 100%, rgba(167, 139, 250, 0.05), transparent 55%);
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--color-arena-border) transparent;
+    scrollbar-color: var(--border) transparent;
   }
-
-  *::-webkit-scrollbar { width: 4px; height: 4px; }
+  *::-webkit-scrollbar { width: 6px; height: 6px; }
   *::-webkit-scrollbar-track { background: transparent; }
-  *::-webkit-scrollbar-thumb { background: var(--color-arena-border); border-radius: 2px; }
+  *::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+  *::-webkit-scrollbar-thumb:hover { background: #2c3a4d; }
 }
 
 @layer utilities {
   .font-display { font-family: var(--font-display); }
-  .font-mono-data { font-family: var(--font-mono); }
-
-  .glow-primary { box-shadow: 0 0 24px rgba(56, 189, 248, 0.18); }
-  .glow-success { box-shadow: 0 0 24px rgba(34, 197, 94, 0.18); }
-  .text-glow { text-shadow: 0 0 16px currentColor; }
-
-  .card {
-    background-color: var(--color-arena-surface);
-    border: 1px solid var(--color-arena-border);
-    border-radius: 0.75rem;
-  }
-
-  .card-header {
-    padding: 0.875rem 1.25rem;
-    border-bottom: 1px solid var(--color-arena-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
+  .font-mono-data { font-family: var(--font-mono); font-feature-settings: "tnum"; }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
 }

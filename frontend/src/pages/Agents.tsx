@@ -2,8 +2,11 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, Agent, LeaderboardEntry } from '../lib/api'
 import { rupees, pct } from '../lib/format'
+import { agentColor } from '@/lib/constants'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Activity, TrendingUp, TrendingDown, ChevronRight } from 'lucide-react'
-import { AGENT_COLORS } from './Dashboard'
 
 export default function AgentsList() {
   const nav = useNavigate()
@@ -20,27 +23,23 @@ export default function AgentsList() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="flex items-center gap-3 text-arena-muted">
-          <div className="w-4 h-4 border-2 border-arena-primary/30 border-t-arena-primary rounded-full animate-spin" />
-          <span className="text-sm font-mono-data tracking-wider">LOADING AGENTS...</span>
+      <div className="max-w-5xl mx-auto space-y-6">
+        <Skeleton className="h-9 w-40" />
+        <div className="space-y-3">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
         </div>
       </div>
     )
   }
 
   const rankMap = Object.fromEntries(leaderboard.map(e => [e.id, e]))
-  const sortedAgents = [...agents].sort((a, b) => {
-    const ra = rankMap[a.id]?.rank ?? 999
-    const rb = rankMap[b.id]?.rank ?? 999
-    return ra - rb
-  })
+  const sortedAgents = [...agents].sort((a, b) => (rankMap[a.id]?.rank ?? 999) - (rankMap[b.id]?.rank ?? 999))
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-bold text-arena-text tracking-tight">Agents</h1>
-        <p className="text-sm text-arena-muted mt-1">{agents.length} active competitors · NIFTY 100</p>
+        <h1 className="text-2xl font-display font-bold tracking-tight">Agents</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{agents.length} active competitors · NIFTY 100</p>
       </div>
 
       <div className="space-y-3">
@@ -48,79 +47,69 @@ export default function AgentsList() {
           const lb = rankMap[agent.id]
           const returnPct = lb?.return_pct ?? 0
           const isPositive = returnPct >= 0
-          const color = AGENT_COLORS[i % AGENT_COLORS.length]
+          const color = agentColor(i)
           const isLeader = lb?.rank === 1
 
           return (
-            <div
+            <Card
               key={agent.id}
               onClick={() => nav(`/agents/${agent.id}`)}
-              className="bg-arena-surface border border-arena-border rounded-2xl p-5 cursor-pointer hover:border-arena-border-bright hover:bg-arena-surface-2 transition-all group"
-              style={isLeader ? { borderColor: `${color}40` } : undefined}
+              className="cursor-pointer p-5 transition-all hover:border-border/80 hover:bg-secondary/30"
+              style={isLeader ? { borderColor: `${color}55` } : undefined}
             >
               <div className="flex items-center gap-4">
-                {/* Rank + color dot */}
                 <div className="flex items-center gap-3 shrink-0">
-                  <span className={`text-sm font-bold font-mono-data w-6 text-center ${isLeader ? 'text-arena-gold' : 'text-arena-muted'}`}>
+                  <span className={`w-6 text-center font-mono-data text-sm font-bold ${isLeader ? 'text-gold' : 'text-muted-foreground'}`}>
                     #{lb?.rank ?? '--'}
                   </span>
                   <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center font-display font-bold text-sm shrink-0"
-                    style={{ backgroundColor: `${color}18`, color }}
+                    className="grid size-10 place-items-center rounded-lg font-display text-sm font-bold ring-1"
+                    style={{ backgroundColor: `${color}18`, color, boxShadow: `inset 0 0 0 1px ${color}22` }}
                   >
                     {agent.name.charAt(0)}
                   </div>
                 </div>
 
-                {/* Name + model */}
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm text-arena-text group-hover:text-arena-primary transition-colors" style={isLeader ? { color } : undefined}>
-                      {agent.name}
-                    </span>
-                    {isLeader && (
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" style={{ backgroundColor: `${color}20`, color }}>
-                        Leader
-                      </span>
-                    )}
+                    <span className="text-sm font-semibold" style={isLeader ? { color } : undefined}>{agent.name}</span>
+                    {isLeader && <Badge style={{ backgroundColor: `${color}20`, color }}>Leader</Badge>}
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-[10px] text-arena-muted font-mono-data truncate">{agent.model}</span>
-                    <span className="text-arena-border">·</span>
-                    <span className="text-[10px] text-arena-muted">{agent.persona || 'balanced'}</span>
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <span className="truncate text-[11px] text-muted-foreground font-mono-data">{agent.model}</span>
+                    <span className="text-border">·</span>
+                    <span className="text-[11px] text-muted-foreground">{agent.persona || 'balanced'}</span>
                   </div>
                 </div>
 
-                {/* Portfolio */}
-                <div className="text-right shrink-0 hidden sm:block">
-                  <div className="text-[10px] text-arena-muted uppercase tracking-widest mb-1">Portfolio</div>
-                  <div className="text-sm font-mono-data font-semibold tabular-nums text-arena-text">
+                <div className="hidden shrink-0 text-right sm:block">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Portfolio</div>
+                  <div className="mt-1 font-mono-data text-sm font-semibold tabular-nums">
                     {lb ? rupees(lb.total_value) : rupees(agent.capital)}
                   </div>
                 </div>
 
-                {/* Return */}
-                <div className="text-right shrink-0 w-20">
-                  <div className="text-[10px] text-arena-muted uppercase tracking-widest mb-1">Return</div>
-                  <div className={`flex items-center justify-end gap-1 text-sm font-mono-data font-bold tabular-nums ${isPositive ? 'text-arena-success' : returnPct < 0 ? 'text-arena-danger' : 'text-arena-muted'}`}>
+                <div className="w-20 shrink-0 text-right">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Return</div>
+                  <div className={`mt-1 flex items-center justify-end gap-1 font-mono-data text-sm font-bold tabular-nums ${isPositive ? 'text-up' : returnPct < 0 ? 'text-down' : 'text-muted-foreground'}`}>
                     {returnPct !== 0 && (isPositive ? <TrendingUp size={13} /> : <TrendingDown size={13} />)}
                     {pct(returnPct)}
                   </div>
                 </div>
 
-                <ChevronRight size={16} className="text-arena-border group-hover:text-arena-muted transition-colors shrink-0" />
+                <ChevronRight size={16} className="shrink-0 text-muted-foreground/50" />
               </div>
-            </div>
+            </Card>
           )
         })}
       </div>
 
       {agents.length === 0 && (
-        <div className="bg-arena-surface border border-arena-border rounded-xl p-12 text-center">
-          <Activity size={28} className="mx-auto text-arena-muted mb-3" />
-          <p className="text-sm text-arena-muted">No agents yet.</p>
-          <p className="text-xs text-arena-muted mt-1 font-mono-data">POST /api/league/seed-agents</p>
-        </div>
+        <Card className="p-12 text-center">
+          <Activity size={28} className="mx-auto mb-3 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No agents yet.</p>
+          <p className="mt-1 text-xs text-muted-foreground font-mono-data">POST /api/league/seed-agents</p>
+        </Card>
       )}
     </div>
   )
