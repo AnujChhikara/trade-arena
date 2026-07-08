@@ -3,59 +3,49 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ============================================================
-   Trade Arena — design tokens (dark trading terminal)
-   Semantic layer -> mapped to Tailwind utilities via @theme inline
-   ============================================================ */
 :root {
-  --radius: 0.75rem;
+  --radius: 0.65rem;
 
-  /* Base surfaces — deliberate elevation steps */
-  --background: #06090F;
-  --foreground: #E7EBF3;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.72 0.14 233);
+  --primary-foreground: oklch(0.16 0.03 245);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.637 0.208 25.3);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.72 0.14 233);
 
-  --card: #10151F;
-  --card-foreground: #E7EBF3;
+  --chart-1: oklch(0.72 0.14 233);
+  --chart-2: oklch(0.72 0.16 300);
+  --chart-3: oklch(0.77 0.15 162);
+  --chart-4: oklch(0.75 0.16 55);
+  --chart-5: oklch(0.7 0.18 15);
 
-  --popover: #141B26;
-  --popover-foreground: #E7EBF3;
+  --sidebar: oklch(0.185 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.72 0.14 233);
+  --sidebar-primary-foreground: oklch(0.16 0.03 245);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.72 0.14 233);
 
-  /* Brand */
-  --primary: #38BDF8;
-  --primary-foreground: #04121C;
-
-  --secondary: #19212E;
-  --secondary-foreground: #E7EBF3;
-
-  --muted: #161D28;
-  --muted-foreground: #8A94A7;
-
-  --accent: #172033;
-  --accent-foreground: #7DD3FC;
-
-  --destructive: #F0524B;
-  --destructive-foreground: #FEECEC;
-
-  --border: #212B3B;
-  --input: #212B3B;
-  --ring: #38BDF8;
-
-  /* Semantic finance */
-  --up: #22C55E;
-  --up-soft: #0B2A18;
-  --down: #F0524B;
-  --down-soft: #2A1010;
-  --gold: #F5B841;
-  --warning: #F59E0B;
-  --warning-soft: #2A1E08;
-
-  /* Agent identity palette */
-  --agent-1: #38BDF8;
-  --agent-2: #A78BFA;
-  --agent-3: #34D399;
-  --agent-4: #FB923C;
-  --agent-5: #FB7185;
-  --agent-6: #FBBF24;
+  /* Finance semantics */
+  --up: oklch(0.75 0.17 150);
+  --down: oklch(0.66 0.2 22);
+  --gold: oklch(0.8 0.15 85);
+  --warning: oklch(0.78 0.15 70);
 
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
@@ -67,7 +57,6 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -89,13 +78,25 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
   --color-up: var(--up);
-  --color-up-soft: var(--up-soft);
   --color-down: var(--down);
-  --color-down-soft: var(--down-soft);
   --color-gold: var(--gold);
   --color-warning: var(--warning);
-  --color-warning-soft: var(--warning-soft);
 
   --font-display: var(--font-display);
   --font-sans: var(--font-sans);
@@ -105,41 +106,29 @@
 @layer base {
   * {
     border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
   }
-
   body {
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-    color-scheme: dark;
   }
-
-  /* Ambient radial glow behind content for depth */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    background:
-      radial-gradient(60rem 40rem at 78% -10%, rgba(56, 189, 248, 0.06), transparent 60%),
-      radial-gradient(50rem 40rem at 0% 100%, rgba(167, 139, 250, 0.05), transparent 55%);
-  }
-
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-  }
-  *::-webkit-scrollbar { width: 6px; height: 6px; }
-  *::-webkit-scrollbar-track { background: transparent; }
-  *::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
-  *::-webkit-scrollbar-thumb:hover { background: #2c3a4d; }
 }
 
 @layer utilities {
   .font-display { font-family: var(--font-display); }
   .font-mono-data { font-family: var(--font-mono); font-feature-settings: "tnum"; }
   .tabular-nums { font-variant-numeric: tabular-nums; }
+}
+
+.dark {
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
