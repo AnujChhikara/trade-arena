@@ -8,8 +8,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      body { -webkit-font-smoothing: antialiased; background: #06090F; }
+      /* Only pre-paint background to avoid a white flash before CSS loads.
+         Do NOT reset margin/padding here — an unlayered reset overrides
+         Tailwind v4's layered padding/space-y utilities. */
+      html { background: #0a0a0a; }
     </style>
   </head>
   <body>

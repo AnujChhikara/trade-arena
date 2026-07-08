@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Swords, Wallet, TrendingUp, Trophy, Clock } from 'lucide-react'
+import { Swords, Wallet, TrendingUp, Trophy, Clock, LineChart } from 'lucide-react'
 
 export default function Dashboard() {
   const nav = useNavigate()
@@ -29,9 +29,9 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl space-y-6">
+      <div className="mx-auto max-w-5xl space-y-5">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-24" />)}
         </div>
         <Skeleton className="h-64" />
         <Skeleton className="h-72" />
@@ -45,7 +45,7 @@ export default function Dashboard() {
   const isOpen = status?.status === 'active'
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="mx-auto max-w-5xl space-y-5">
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard label="Total Portfolio" value={compact(totalValue)} icon={Wallet} />
@@ -100,17 +100,22 @@ export default function Dashboard() {
       </Card>
 
       {/* Chart */}
-      {daily.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Portfolio Value Over Time</CardTitle>
-            <CardDescription>{daily.length <= 2 ? 'Collecting daily data…' : `Last ${daily.length} sessions`}</CardDescription>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Portfolio Value Over Time</CardTitle>
+          <CardDescription>{daily.length < 2 ? 'Not enough history yet' : `Last ${daily.length} sessions`}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {daily.length < 2 ? (
+            <div className="flex h-40 flex-col items-center justify-center gap-2 rounded-lg border border-dashed text-center">
+              <LineChart className="size-6 text-muted-foreground/60" />
+              <p className="text-sm text-muted-foreground">The performance chart appears after a couple of trading sessions.</p>
+            </div>
+          ) : (
             <PortfolioChart daily={daily} />
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       {/* Full leaderboard */}
       <Card>
